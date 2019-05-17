@@ -12,7 +12,8 @@ import { BrowserRouter, Route } from "react-router-dom";
 import ErrorPopup from "./components/ErrorHandlers/ErrorPopup";
 
 import { updateAndCacheFuseIndices } from "./APIs/caching/databaseStructure/root";
-import { syncFuseIndicesFromDB } from "./APIs/caching/databaseStructure/syncFuseIndices";
+import { updateAndCacheSharedFuseIndices } from "./APIs/caching/databaseStructure/sharedChannels";
+import { syncFuseIndicesFromDB } from "./utils/syncFuseIndices";
 
 interface IAppProps {
   uid: string | null;
@@ -21,10 +22,9 @@ interface IAppProps {
 
 const App: React.FC<IAppProps> = (props: IAppProps) => {
   const setupTaglist = async () => {
-    const time = Date.now();
     await syncFuseIndicesFromDB();
-    console.log("Time taken to sync taglist from DB", time - Date.now());
     updateAndCacheFuseIndices();
+    updateAndCacheSharedFuseIndices();
   };
 
   useEffect(() => {

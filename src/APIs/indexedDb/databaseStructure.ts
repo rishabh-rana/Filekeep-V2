@@ -1,6 +1,6 @@
 import {
-  IRootDatabaseStructure_INDEXEDDB,
-  IRootFuseIndices_INDEXEDDB
+  IDatabaseStructure_INDEXEDDB,
+  IFuseIndices_INDEXEDDB
 } from "../../typesAndConstants/appTypes";
 
 const databaseName = "coreCompanyData";
@@ -9,10 +9,10 @@ const MAIN_OBJSTORE = "mainStore";
 const MAIN_OBJSTORE_KEYPATH = "keyPath";
 
 type ReturnData = Promise<
-  IRootDatabaseStructure_INDEXEDDB | IRootFuseIndices_INDEXEDDB | false
+  IDatabaseStructure_INDEXEDDB | IFuseIndices_INDEXEDDB | false
 >;
 
-export const getRootDatabaseStructure = (keyPath: string): ReturnData => {
+export const getDatabaseStructure = (keyPath: string): ReturnData => {
   const promise: ReturnData = new Promise((resolve, reject) => {
     if (!window.indexedDB) resolve(false);
 
@@ -38,7 +38,7 @@ export const getRootDatabaseStructure = (keyPath: string): ReturnData => {
 
       db.onerror = (event: any) => {
         // return error object later
-        console.log(event.target.errorCode);
+
         resolve(false);
       };
 
@@ -58,7 +58,6 @@ export const getRootDatabaseStructure = (keyPath: string): ReturnData => {
 
       req.onsuccess = (event: any) => {
         if (req.result) {
-          console.log("GOT DATA FROM DB", req.result);
           resolve(req.result);
         } else {
           resolve(false);
@@ -70,11 +69,9 @@ export const getRootDatabaseStructure = (keyPath: string): ReturnData => {
   return promise;
 };
 
-type InputData = IRootDatabaseStructure_INDEXEDDB | IRootFuseIndices_INDEXEDDB;
+type InputData = IDatabaseStructure_INDEXEDDB | IFuseIndices_INDEXEDDB;
 
-export const addRootDatabaseStructureData = (
-  data: InputData
-): Promise<boolean> => {
+export const addDatabaseStructureData = (data: InputData): Promise<boolean> => {
   const promise: Promise<boolean> = new Promise((resolve, reject) => {
     if (!window.indexedDB) resolve(false);
 
@@ -99,7 +96,7 @@ export const addRootDatabaseStructureData = (
 
       db.onerror = (event: any) => {
         // return error object later
-        console.log(event.target.errorCode);
+        // console.log(event.target.errorCode);
         resolve(false);
       };
 
@@ -118,7 +115,6 @@ export const addRootDatabaseStructureData = (
       };
 
       req.onsuccess = (event: any) => {
-        console.log("ADDED DATA TO DB");
         resolve(true);
       };
     };
