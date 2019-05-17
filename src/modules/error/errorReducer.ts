@@ -4,8 +4,8 @@ import {
   IRESOLVE_ERROR_ACTION,
   THROW_ERROR,
   RESOLVE_ERROR
-} from "../types/store/error";
-import { colors } from "../palette/colors";
+} from "../../typesAndConstants/errorTypes";
+import { colors } from "../../colors";
 
 const initialState: IErrorState = {
   error: false,

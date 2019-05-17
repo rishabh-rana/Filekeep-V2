@@ -1,18 +1,18 @@
 // import types
 import { ThunkAction } from "redux-thunk";
-import { AppState } from "../../reducers/index";
+import { AppState } from "../indexReducer";
 import { Action } from "redux";
-import { IUserData } from "../../types/store/auth";
+import { IUserData } from "../../typesAndConstants/authTypes";
 
 // import actionCreators
-import { SyncUsers } from "./actionCreator";
-import { throwErrorCreator } from "../error/actionCreator";
+import { SyncUsers } from "./authActionCreator";
+import { throwErrorCreator } from "../error/errorActionCreator";
 // import firebase, mixpanel APIs
 import { auth, per, provider, firestore } from "../../config/firebase";
 import mixpanel from "../../config/mixpanel";
 //import firebase, mixpanel constants
-import { USER_COLLECTION } from "../../config/firestore_constants";
-import { TRACK_SIGNIN } from "../../config/mixpanel_constants";
+import { USER_COLLECTION } from "../../typesAndConstants/firestoreConstants";
+import { TRACK_SIGNIN } from "../../typesAndConstants/mixpanelConstants";
 
 export const signInWithGoogle = (): ThunkAction<
   void,

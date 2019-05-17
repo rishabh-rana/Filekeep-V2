@@ -1,8 +1,8 @@
 import firebase from "firebase/app";
-import { SyncUsers } from "../actions/auth/actionCreator";
+import { SyncUsers } from "../modules/auth/authActionCreator";
 import store from "../store";
 import mixpanel from "../config/mixpanel";
-import { FOUND_MESSING_WITH_CODE } from "../config/mixpanel_constants";
+import { FOUND_MESSING_WITH_CODE } from "../typesAndConstants/mixpanelConstants";
 
 const getUidInState = (): string | null => {
   const state = store.getState();

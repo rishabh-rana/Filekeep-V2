@@ -1,6 +1,6 @@
 import React from "react";
 import { connect } from "react-redux";
-import { signInWithGoogle } from "../../actions/auth/googleAuth";
+import { signInWithGoogle } from "../modules/auth/googleAuthActions";
 import styled from "styled-components";
 
 const Container = styled.div`

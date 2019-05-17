@@ -1,8 +1,8 @@
 import { ThunkAction } from "redux-thunk";
-import { AppState } from "../../reducers/index";
+import { AppState } from "../indexReducer";
 import { Action } from "redux";
-import { IErrorPopup } from "../../types/store/error";
-import { throwErrorCreator, resolveErrorCreator } from "./actionCreator";
+import { IErrorPopup } from "../../typesAndConstants/errorTypes";
+import { throwErrorCreator, resolveErrorCreator } from "./errorActionCreator";
 
 export const throwError = (
   errorObj: IErrorPopup

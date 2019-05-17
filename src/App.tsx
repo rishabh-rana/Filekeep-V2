@@ -1,15 +1,18 @@
 import React, { useEffect } from "react";
 import { connect } from "react-redux";
-import { AppState } from "./reducers/index";
-import SignInWithGoogle from "./components/AuthScreens/SignInWithGoogle";
+import { AppState } from "./modules/indexReducer";
+import SignInWithGoogle from "./pages/Login";
 
-import { throwError } from "./actions/error/error";
+import { throwError } from "./modules/error/errorActions";
 import ErrorBoundary from "./components/ErrorHandlers/ErrorBoundary";
-import { colors } from "./palette/colors";
 
 import { setupPushNotifications } from "./utils/setupPushNotifications";
 import { verifyLogin, LogoutAfterTimeout } from "./utils/verifyLogin";
-import MainRouter from "./components/AppHelpers/MainRouter";
+import { BrowserRouter, Route } from "react-router-dom";
+import ErrorPopup from "./components/ErrorHandlers/ErrorPopup";
+
+import { updateAndCacheFuseIndices } from "./APIs/caching/databaseStructure/root";
+import { syncFuseIndicesFromDB } from "./APIs/caching/databaseStructure/syncFuseIndices";
 
 interface IAppProps {
   uid: string | null;
@@ -17,20 +20,21 @@ interface IAppProps {
 }
 
 const App: React.FC<IAppProps> = (props: IAppProps) => {
-  // SETUP PUSH NOTIFS
+  const setupTaglist = async () => {
+    const time = Date.now();
+    await syncFuseIndicesFromDB();
+    console.log("Time taken to sync taglist from DB", time - Date.now());
+    updateAndCacheFuseIndices();
+  };
 
   useEffect(() => {
     if (props.uid) {
-      // setup and use push notifications
-      // second argument is the function to be called with the payload of the foreground notification
-      setupPushNotifications(props.uid, (data: any) => {
-        props.throwError({
-          message: data.notification.body,
-          color: colors.primary
-        });
-      });
+      // push notifications
+      setupPushNotifications(props.uid);
       // logout if session has timed out or firebase has logged you out
       LogoutAfterTimeout();
+      // sync, update and cache the taglist
+      setupTaglist();
     }
   }, []);
 
@@ -49,14 +53,20 @@ const App: React.FC<IAppProps> = (props: IAppProps) => {
   // app
   return (
     <ErrorBoundary>
-      <MainRouter />
+      <BrowserRouter>
+        <React.Fragment>
+          <Route path="/" component={() => <div>Hello Filekeep</div>} />
+          <Route path="/" component={ErrorPopup} />
+        </React.Fragment>
+      </BrowserRouter>
     </ErrorBoundary>
   );
 };
 
 const mapstate = (state: AppState) => {
   return {
-    uid: state.authenticationState.uid
+    uid: state.authenticationState.uid,
+    companyData: state.coreCompanyData
   };
 };
 

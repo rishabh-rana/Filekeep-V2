@@ -1,4 +1,4 @@
-import { colors } from "../../palette/colors";
+import { colors } from "../colors";
 
 export const THROW_ERROR = "throwerror";
 export const RESOLVE_ERROR = "resolveerror";

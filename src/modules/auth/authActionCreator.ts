@@ -2,7 +2,7 @@ import {
   SYNC_USERS,
   ISyncUsersAction,
   IUserData
-} from "../../types/store/auth";
+} from "../../typesAndConstants/authTypes";
 
 export function SyncUsers(userData: IUserData): ISyncUsersAction {
   return {

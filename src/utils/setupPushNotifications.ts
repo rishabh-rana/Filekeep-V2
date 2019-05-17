@@ -1,5 +1,8 @@
 import { messaging, firestore } from "../config/firebase";
-import { USER_COLLECTION } from "../config/firestore_constants";
+import { USER_COLLECTION } from "../typesAndConstants/firestoreConstants";
+import store from "../store";
+import { throwErrorCreator } from "../modules/error/errorActionCreator";
+import { colors } from "../colors";
 
 const requestPermissionForPush = async (uid: string) => {
   const doc = await firestore
@@ -37,10 +40,7 @@ const requestPermissionForPush = async (uid: string) => {
   }
 };
 
-export const setupPushNotifications = (
-  uid: string,
-  handleForegroundNotif: any
-) => {
+export const setupPushNotifications = (uid: string) => {
   // request permissions
   requestPermissionForPush(uid);
 
@@ -66,6 +66,15 @@ export const setupPushNotifications = (
         console.log("Unable to retrieve refreshed token ", err);
       });
   });
+
+  const handleForegroundNotif = (payload: any) => {
+    store.dispatch(
+      throwErrorCreator({
+        color: colors.primary,
+        message: payload.notification.body
+      })
+    );
+  };
 
   // handle foreground notifs
   messaging.onMessage(function(payload) {

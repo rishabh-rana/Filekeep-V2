@@ -1,4 +1,8 @@
-import { IAuthState, ISyncUsersAction, SYNC_USERS } from "../types/store/auth";
+import {
+  IAuthState,
+  ISyncUsersAction,
+  SYNC_USERS
+} from "../../typesAndConstants/authTypes";
 
 const initialState: IAuthState = {
   uid:
