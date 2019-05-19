@@ -11,7 +11,10 @@ const getUidInState = (): string | null => {
 
 export const LogoutAfterTimeout = () => {
   firebase.auth().onAuthStateChanged(user => {
-    if (!user) store.dispatch(SyncUsers({ displayName: "User", uid: null }));
+    if (!user) {
+      store.dispatch(SyncUsers({ displayName: "User", uid: null }));
+      localStorage.removeItem("uid");
+    }
   });
 };
 
@@ -37,6 +40,7 @@ export const verifyLogin = (): any => {
             uid: user.uid
           })
         );
+        localStorage.setItem("uid", user.uid);
       }
     } else {
       // if uid exist in state or in localstore, flush it clean
@@ -49,6 +53,7 @@ export const verifyLogin = (): any => {
             uid: null
           })
         );
+        localStorage.removeItem("uid");
       }
     }
 

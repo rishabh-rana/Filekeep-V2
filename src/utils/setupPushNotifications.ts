@@ -1,5 +1,9 @@
 import { messaging, firestore } from "../config/firebase";
-import { USER_COLLECTION } from "../typesAndConstants/firestoreConstants";
+import {
+  USER_COLLECTION,
+  INFORMATION_SUBCOLLECTION,
+  PRIVATE_INFORMATION
+} from "../typesAndConstants/firestoreConstants";
 import store from "../store";
 import { throwErrorCreator } from "../modules/error/errorActionCreator";
 import { colors } from "../colors";
@@ -8,6 +12,8 @@ const requestPermissionForPush = async (uid: string) => {
   const doc = await firestore
     .collection(USER_COLLECTION)
     .doc(uid)
+    .collection(INFORMATION_SUBCOLLECTION)
+    .doc(PRIVATE_INFORMATION)
     .get();
 
   const data = doc.data();
@@ -23,6 +29,8 @@ const requestPermissionForPush = async (uid: string) => {
               firestore
                 .collection(USER_COLLECTION)
                 .doc(uid)
+                .collection(INFORMATION_SUBCOLLECTION)
+                .doc(PRIVATE_INFORMATION)
                 .update({
                   gcm_token: currentToken
                 });
@@ -53,8 +61,10 @@ export const setupPushNotifications = (uid: string) => {
           localStorage.setItem("pushPermission", refreshedToken);
 
           firestore
-            .collection("users")
+            .collection(USER_COLLECTION)
             .doc(uid)
+            .collection(INFORMATION_SUBCOLLECTION)
+            .doc(PRIVATE_INFORMATION)
             .update({
               gcm_token: refreshedToken
             });

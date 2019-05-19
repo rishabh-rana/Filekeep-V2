@@ -3,7 +3,7 @@ import {
   IFuseIndices_INDEXEDDB
 } from "../../typesAndConstants/appTypes";
 
-const databaseName = "coreCompanyData";
+const databaseNameConstant = "coreCompanyData";
 const databaseNumber = 1;
 const MAIN_OBJSTORE = "mainStore";
 const MAIN_OBJSTORE_KEYPATH = "keyPath";
@@ -15,6 +15,12 @@ type ReturnData = Promise<
 export const getDatabaseStructure = (keyPath: string): ReturnData => {
   const promise: ReturnData = new Promise((resolve, reject) => {
     if (!window.indexedDB) resolve(false);
+
+    const activeCompany = localStorage.getItem("activeCompany");
+
+    if (!activeCompany) resolve(false);
+
+    const databaseName = databaseNameConstant + activeCompany;
 
     let request = window.indexedDB.open(databaseName, databaseNumber);
     let db: IDBDatabase;
@@ -74,6 +80,12 @@ type InputData = IDatabaseStructure_INDEXEDDB | IFuseIndices_INDEXEDDB;
 export const addDatabaseStructureData = (data: InputData): Promise<boolean> => {
   const promise: Promise<boolean> = new Promise((resolve, reject) => {
     if (!window.indexedDB) resolve(false);
+
+    const activeCompany = localStorage.getItem("activeCompany");
+
+    if (!activeCompany) resolve(false);
+
+    let databaseName = databaseNameConstant + activeCompany;
 
     let request = window.indexedDB.open(databaseName, databaseNumber);
     let db: IDBDatabase;

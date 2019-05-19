@@ -1,4 +1,4 @@
-import { getDatabaseStructure } from "../APIs/indexedDb/databaseStructure";
+import { getDatabaseStructure } from "../APIs/indexedDb/databaseHeirarchyStructure";
 import {
   ROOT_FUSE_INDICES,
   SHARED_FUSE_INDICES,
@@ -10,9 +10,10 @@ import {
   SyncSharedFuseIndicesCreator
 } from "../modules/appActionCreator";
 
-export const syncFuseIndicesFromDB = async (): Promise<true> => {
-  const promise: Promise<true> = new Promise(async (resolve, reject) => {
+export const syncFuseIndicesFromDB = async (): Promise<boolean> => {
+  const promise: Promise<boolean> = new Promise(async (resolve, reject) => {
     // get data from indexedDb
+    let isSuccess = true;
 
     const rootData = await ((getDatabaseStructure(
       ROOT_FUSE_INDICES
@@ -25,14 +26,18 @@ export const syncFuseIndicesFromDB = async (): Promise<true> => {
     // if taglist existed, update state
     if (rootData !== false) {
       store.dispatch(SyncRootFuseIndicesCreator(rootData.data));
+    } else {
+      isSuccess = false;
     }
 
     // if taglist existed, update state
     if (sharedData !== false) {
       store.dispatch(SyncSharedFuseIndicesCreator(sharedData.data));
+    } else {
+      isSuccess = false;
     }
 
-    resolve(true);
+    resolve(isSuccess);
   });
 
   return promise;

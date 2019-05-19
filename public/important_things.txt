@@ -1,0 +1,4 @@
+1) remember to setup activeCompany very carefully as caching APIs depend on it as well as many other APIs
+activeCompany in localStore must not be compromised, if it is the case, opt out localstorage use for state use case in caching apis and other places
+
+2) Handle fuse indice missing cases

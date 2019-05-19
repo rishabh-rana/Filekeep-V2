@@ -1,7 +1,68 @@
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write;
-    }
+
+      
+      match /companies/{company} {
+      	// functions
+      	function isCompanyShared(){
+      		return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.shared_projects[company] == true;
+      	}
+        function getUserData() {
+        	return get(/databases/$(database)/documents/companies/$(company)/users/$(request.auth.uid)).data
+        }
+        function getSharedChannels (){
+        	return getUserData().shared_channels
+        }
+        
+      	// company document
+      	allow read: if isCompanyShared();
+        allow create: if isCompanyShared();
+        allow delete: if false;
+        allow update: if request.auth.uid in resource.data.edit_rights;
+        
+        match /channels_and_subprojects/version {
+        	allow read, update, create: if isCompanyShared();
+          allow delete: if false;
+        }
+        
+        match /channels_and_subprojects/{channel} {
+        	allow read, update, create: if channel in getSharedChannels();
+          allow delete: if false;
+        }
+        
+        match /templates/{template} {
+        	allow read, update, create : if resource.data.used_in.keys().hasAny(getSharedChannels().keys());
+          allow delete: if false;
+        }
+        
+        match /users/{userUid} {
+        	allow read: if request.auth.uid == userUid || resource.data["clearance level"] < getUserData()["clearance level"];
+          allow update: if resource.data.role == "owner" || resource.data.role == "editor";
+          allow delete, create: if false;
+        }
+        
+        match /data/{nodeId} {
+        	allow read: if resource.data.data_visibility == "public";
+  	
+        	allow read, write: if getSharedChannels().keys().hasAll(resource.data.tag.keys());
+        }
+        
+        
+      }
+      
+      match /users/{userId} {
+      	allow read: if request.auth.uid == userId;
+        allow write: if false;
+        
+        match /information/confidential_editable {
+        	allow read, write: if request.auth.uid == userId;
+        }
+        match /information/public {
+        	allow read: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.shared_projects.keys().hasAny(get(/databases/$(database)/documents/users/$(userId)).data.shared_projects.keys()) || request.auth.uid == userId;
+          allow write: if request.auth.uid == userId;
+        }
+      }
+      
+    
   }
 }

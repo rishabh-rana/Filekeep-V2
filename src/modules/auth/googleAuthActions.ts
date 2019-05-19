@@ -11,7 +11,12 @@ import { throwErrorCreator } from "../error/errorActionCreator";
 import { auth, per, provider, firestore } from "../../config/firebase";
 import mixpanel from "../../config/mixpanel";
 //import firebase, mixpanel constants
-import { USER_COLLECTION } from "../../typesAndConstants/firestoreConstants";
+import {
+  USER_COLLECTION,
+  INFORMATION_SUBCOLLECTION,
+  PRIVATE_INFORMATION,
+  PUBLIC_INFORMATION
+} from "../../typesAndConstants/firestoreConstants";
 import { TRACK_SIGNIN } from "../../typesAndConstants/mixpanelConstants";
 
 export const signInWithGoogle = (): ThunkAction<
@@ -37,6 +42,8 @@ export const signInWithGoogle = (): ThunkAction<
         firestore
           .collection(USER_COLLECTION)
           .doc(result.user.uid)
+          .collection(INFORMATION_SUBCOLLECTION)
+          .doc(PRIVATE_INFORMATION)
           .update({
             lastSignIn: Date.now()
           });
@@ -72,8 +79,18 @@ export const signInWithGoogle = (): ThunkAction<
           .collection(USER_COLLECTION)
           .doc(result.user.uid)
           .set({
-            displayName: result.user.displayName,
-            lastSignIn: Date.now()
+            shared_projects: {
+              Filekeep_Introduction: true
+            }
+          });
+
+        firestore
+          .collection(USER_COLLECTION)
+          .doc(result.user.uid)
+          .collection(INFORMATION_SUBCOLLECTION)
+          .doc(PUBLIC_INFORMATION)
+          .set({
+            displayName: result.user.displayName
           });
       } catch (error) {
         // DISPATCH OFFLINE SYNC ACTION

@@ -11,9 +11,10 @@ import { verifyLogin, LogoutAfterTimeout } from "./utils/verifyLogin";
 import { BrowserRouter, Route } from "react-router-dom";
 import ErrorPopup from "./components/ErrorHandlers/ErrorPopup";
 
-import { updateAndCacheFuseIndices } from "./APIs/caching/databaseStructure/root";
-import { updateAndCacheSharedFuseIndices } from "./APIs/caching/databaseStructure/sharedChannels";
+import { handleDatabaseHeirarchyStructureCaching } from "./APIs/caching/handleCaching";
 import { syncFuseIndicesFromDB } from "./utils/syncFuseIndices";
+
+import SearchBar from "./components/SearchBar/search";
 
 interface IAppProps {
   uid: string | null;
@@ -21,10 +22,9 @@ interface IAppProps {
 }
 
 const App: React.FC<IAppProps> = (props: IAppProps) => {
-  const setupTaglist = async () => {
+  const setupFuseIndices = async () => {
     await syncFuseIndicesFromDB();
-    updateAndCacheFuseIndices();
-    updateAndCacheSharedFuseIndices();
+    handleDatabaseHeirarchyStructureCaching();
   };
 
   useEffect(() => {
@@ -34,7 +34,7 @@ const App: React.FC<IAppProps> = (props: IAppProps) => {
       // logout if session has timed out or firebase has logged you out
       LogoutAfterTimeout();
       // sync, update and cache the taglist
-      setupTaglist();
+      setupFuseIndices();
     }
   }, []);
 
@@ -55,7 +55,7 @@ const App: React.FC<IAppProps> = (props: IAppProps) => {
     <ErrorBoundary>
       <BrowserRouter>
         <React.Fragment>
-          <Route path="/" component={() => <div>Hello Filekeep</div>} />
+          <Route path="/" component={SearchBar} />
           <Route path="/" component={ErrorPopup} />
         </React.Fragment>
       </BrowserRouter>
