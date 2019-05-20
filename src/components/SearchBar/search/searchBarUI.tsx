@@ -64,7 +64,6 @@ const MainBar: React.FC<IProps> = React.memo((props: IProps) => {
     );
     if (scrollableDiv) scrollableDiv.focus();
   };
-  console.log("RERENDERING MAINBAR");
 
   return (
     <Clipper>

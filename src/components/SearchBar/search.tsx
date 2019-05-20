@@ -10,8 +10,7 @@ import { AppState } from "../../modules/indexReducer";
 
 import {
   queryFunctionsFuse,
-  queryFunctions,
-  queryFunctionsStart
+  queryFunctions
 } from "../../appData/queryFunctions";
 import { IFuseIndex } from "./types";
 
@@ -42,14 +41,11 @@ interface IProps {
 // inFocus: determines if the input is in focus to Mount/ Unmount the DropDown
 
 interface IState {
-  inputParser: string[];
-  matchedRecords: string[];
   turbo: boolean;
   stopDelayMatchingTimeout: any;
   inFocus: boolean;
-  fuseOn: {
+  fuseFilters: {
     cached_list?: boolean;
-    queryFunctionsStart?: boolean;
     filter?: string | null;
     queryFunctionsFuse?: boolean;
   };
@@ -62,26 +58,26 @@ enum Constants {
   matchDelay = 1000
 }
 
+const noIndicesError = "Cannot load data, you may be offline";
+
 // fuse object
-let fuse: any = null;
+let fuse: Fuse<IFuseIndex, Fuse.FuseOptions<IFuseIndex>> | null = null;
 // fuse options
-const FuseOptions = {
-  threshold: 0.1,
+const FuseOptions: Fuse.FuseOptions<IFuseIndex> = {
+  threshold: 0.6,
   location: 0,
   distance: 100,
   minMatchCharLength: 1,
+  shouldSort: true,
   keys: ["tag"]
 };
 //initial state
 const initialState: IState = {
-  inputParser: [],
-  matchedRecords: [],
   turbo: false,
   inFocus: false,
   stopDelayMatchingTimeout: null,
-  fuseOn: {
-    cached_list: true,
-    queryFunctionsStart: true
+  fuseFilters: {
+    cached_list: true
   }
 };
 
@@ -89,28 +85,15 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
   // state
   const [state, setState] = useState<IState>(initialState);
   const [input, changeInput] = useState("");
+  const [matchedRecords, changeMatchedRecords] = useState<string[]>([]);
+  const [inputParser, changeInputParser] = useState<string[]>([]);
+
   // inputRef to handle updated value of input in Timeout method (handleMatching)
   const inputRef = useRef(input);
   inputRef.current = input;
 
-  // function to process indices for memoization
-  const processIndices = (
-    index1: IFuseIndex[] | false,
-    index2: IFuseIndex[] | false
-  ) => {
-    if (index1 && index2) {
-      console.log("Calculated indices");
-      return [...index1, ...index2];
-    } else return null;
-  };
-
-  // memoize the index building process
-  // let fuse_indices: IFuseIndex[] | null = useMemo(
-  //   () => processIndices(props.rootFuseIndices, props.sharedFuseIndices),
-  //   [props.rootFuseIndices, props.sharedFuseIndices]
-  // );
-
-  let fuse_indices = props.sharedFuseIndices;
+  const inputParserRef = useRef(inputParser);
+  inputParserRef.current = inputParser;
 
   // helper functions
 
@@ -135,7 +118,6 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
 
   const handleChange = (e: any) => {
     var char = e.target.value;
-
     changeInput(char);
   };
 
@@ -145,7 +127,7 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
       e.preventDefault();
       if (input === "") {
         // if current input is empty
-        var newParser = [...state.inputParser];
+        var newParser = [...inputParser];
         if (newParser.length !== 0) newParser.pop();
         if (newParser.length === 0) {
           // change dropdown options to all fuseindices
@@ -159,18 +141,12 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
           );
         }
         // set the updated records in state
-        setState({
-          ...state,
-          inputParser: newParser
-        });
+        changeInputParser(newParser);
       } else {
         // if input was not empty, just delete previous character
         var newInput = input;
         newInput = newInput.slice(0, newInput.length - 1);
         changeInput(newInput);
-        if (state.stopDelayMatchingTimeout === null) {
-          handleMatching();
-        }
       }
     }
   };
@@ -178,7 +154,28 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
   const handleKeyPress = (e: any) => {
     handleBackspace(e);
     // handle sending the query using enter
-    if (e.key === "Enter" && state.matchedRecords.length === 0) sendQuery();
+    if (e.key === "Enter" && matchedRecords.length === 0) sendQuery();
+  };
+
+  const getMatchesStringArray = (match: IFuseIndex[]): string[] => {
+    let matchStringArray: string[] = [];
+    match.forEach((obj: any) => {
+      matchStringArray.push(obj.tag);
+    });
+
+    return matchStringArray;
+  };
+
+  const isArraySame = (arrayOne: string[], arrayTwo: string[]) => {
+    if (arrayOne.length !== arrayTwo.length) return false;
+
+    let isSame = true;
+
+    arrayOne.forEach((item, index) => {
+      if (item !== arrayTwo[index]) isSame = false;
+    });
+
+    return isSame;
   };
 
   //handle fuzzy search with fuse.js
@@ -186,39 +183,6 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
   const handleMatching = () => {
     var stopDelayMatchingTimeout = setTimeout(
       () => {
-        // below code is needed for creation api, deprecated for now
-
-        // if (
-        //   (state.inputParser[0] === "add" ||
-        //     state.inputParser[0] === "create") &&
-        //   inputRef.current[0] === "'"
-        // ) {
-        //   // if new node addition mode is set
-        //   if (
-        //     inputRef.current.length > 2 &&
-        //     inputRef.current[inputRef.current.length - 1] === "'"
-        //   ) {
-        //     // handle matching the closing ' on a statement like "add 'xyz name'"
-        //     var newParser = [...state.inputParser];
-        //     var newinput = inputRef.current.slice(1);
-        //     newinput = newinput.slice(0, newinput.length - 1);
-        //     newParser.push(newinput);
-        //     handleFuserepair(newinput);
-        //     setState({
-        //       ...state,
-        //       inputParser: newParser,
-        //       stopDelayMatchingTimeout: null
-        //     });
-        //     changeInput("");
-        //   } else {
-        //     setState({
-        //       ...state,
-        //       stopDelayMatchingTimeout: null
-        //     });
-        //   }
-        //   return;
-        // }
-
         // return if fuse object is not present
         if (!fuse) return;
 
@@ -229,39 +193,30 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
 
         //if match is an exact match, remove the dropdown results, without setting stopDelayMatchingTimeout for quick unmount
         if (match && match[0] && match[0].tag === inputRef.current) {
-          var newinput = "";
-
-          // below code is needed for creation api, deprecated for now
-
-          // if (inputRef.current === "add" || inputRef.current === "create")
-          //   newinput = "'";
-
-          var newinputParser = [...state.inputParser, inputRef.current];
           handleFuserepair(inputRef.current);
           setState({
             ...state,
-            matchedRecords: [],
-            inputParser: newinputParser,
             stopDelayMatchingTimeout: null
           });
-          changeInput(newinput);
+          changeInputParser([...inputParser, inputRef.current]);
+          changeInput("");
           // exits to prevent calling setState below
           return;
         }
 
+        const matchStringArray = getMatchesStringArray(match);
+
         // if new matches are found, set them as new options, else just set stopDelayMatchingTimeout: null to ensure
         //another match query can be made on the next keystroke
-        if (match !== state.matchedRecords) {
-          let matchStringArray: string[] = [];
-          match.forEach((obj: any) => {
-            matchStringArray.push(obj.tag);
-          });
-
+        if (
+          !isArraySame(matchStringArray, matchedRecords) &&
+          inputRef.current !== ""
+        ) {
           setState({
             ...state,
-            matchedRecords: matchStringArray,
             stopDelayMatchingTimeout: null
           });
+          changeMatchedRecords(matchStringArray);
         } else {
           setState({
             ...state,
@@ -289,12 +244,13 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
     });
   };
 
-  const repairFuse = (filter: string | null, filterOn: any) => {
-    if (fuse_indices) {
+  // set options for next word, and display possible next word options in dropdown before typing
+  const repairFuse = (filter: string | null, filterOn: string) => {
+    if (props.sharedFuseIndices) {
       if (filterOn === "in" && filter) {
         let newOptions: any[] = [];
 
-        fuse_indices.forEach(index => {
+        props.sharedFuseIndices.forEach(index => {
           if (index.tag === filter && index.parents) {
             Object.keys(index.parents).forEach(tag => {
               newOptions.push({
@@ -307,55 +263,59 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
         // store details
         setState({
           ...state,
-          fuseOn: {
+          fuseFilters: {
             cached_list: true,
             filter: filter
           }
         });
+        changeMatchedRecords(getMatchesStringArray(newOptions.slice(0, 3)));
 
-        fuse = new Fuse([...newOptions], FuseOptions);
+        fuse = new Fuse(newOptions, FuseOptions);
       } else if (filterOn === "all") {
         // store the fuse details
+        const fuseIndex = [...props.sharedFuseIndices, ...queryFunctionsFuse];
         setState({
           ...state,
-          fuseOn: {
+          fuseFilters: {
             cached_list: true,
-            queryFunctionsFuse: true,
-            queryFunctionsStart: true
+            queryFunctionsFuse: true
           }
         });
-        fuse = new Fuse(
-          [...fuse_indices, ...queryFunctionsFuse, ...queryFunctionsStart],
-          FuseOptions
-        );
+        changeMatchedRecords(getMatchesStringArray(fuseIndex.slice(0, 3)));
+        fuse = new Fuse(fuseIndex, FuseOptions);
       } else if (filterOn === "functionsOnly") {
         setState({
           ...state,
-          fuseOn: {
+          fuseFilters: {
             queryFunctionsFuse: true
           }
         });
 
-        fuse = new Fuse([...queryFunctionsFuse], FuseOptions);
+        changeMatchedRecords(
+          getMatchesStringArray(queryFunctionsFuse.slice(0, 3))
+        );
+
+        fuse = new Fuse(queryFunctionsFuse, FuseOptions);
       } else if (filterOn === "cachedListOnly") {
         setState({
           ...state,
-          fuseOn: {
-            queryFunctionsStart: true,
+          fuseFilters: {
             cached_list: true
           }
         });
 
-        fuse = new Fuse([...fuse_indices, ...queryFunctionsStart], FuseOptions);
+        changeMatchedRecords(
+          getMatchesStringArray(props.sharedFuseIndices.slice(0, 3))
+        );
+
+        fuse = new Fuse(props.sharedFuseIndices, FuseOptions);
       }
+    } else {
+      changeMatchedRecords([noIndicesError]);
     }
   };
   //call before setting setState, hence last element of inputParser should be previous tag
   const handleFuserepair = (tag: string | null, optionalFilter?: string) => {
-    // pass empty string for everything
-    if (tag === "") {
-      repairFuse(null, "all");
-    }
     //pass null to move to intitial fuse
     if (tag === null) {
       repairFuse(null, "cachedListOnly");
@@ -367,16 +327,7 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
     } else if (queryFunctions.indexOf(tag) !== -1 && tag !== "in") {
       repairFuse(null, "cachedListOnly");
     } else if (tag === "in") {
-      // handle create and add mode i.e. ommit the filter
-      if (
-        state.inputParser[state.inputParser.length - 2] === "add" ||
-        state.inputParser[state.inputParser.length - 2] === "create"
-      ) {
-        repairFuse(null, "cachedListOnly");
-        return;
-      }
-
-      var filter = state.inputParser[state.inputParser.length - 1];
+      var filter = inputParserRef.current[inputParserRef.current.length - 1];
       if (optionalFilter) filter = optionalFilter;
 
       repairFuse(filter, "in");
@@ -387,19 +338,9 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
 
   //handle the tag selection from dropdown
   const handleTagSelection = (tag: string) => {
-    var newinputParser = [...state.inputParser];
-
-    newinputParser.push(tag);
-
     handleFuserepair(tag);
-    var newInput = "";
-    if (tag === "add" || tag === "create") newInput = "'";
-    setState({
-      ...state,
-      inputParser: newinputParser,
-      matchedRecords: []
-    });
-    changeInput(newInput);
+    changeInputParser([...inputParserRef.current, tag]);
+    changeInput("");
   };
 
   //send query to firestore
@@ -409,8 +350,8 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
     //remove previous listeners, the removeEventListener is an array of functions to be called
     // flush current structure and data
     // if (
-    //   state.inputParser[0] !== "add" &&
-    //   state.inputParser[0] !== "create"
+    //   inputParser[0] !== "add" &&
+    //   inputParser[0] !== "create"
     // ) {
     //   props.flushArchives();
     //   if (props.removeEventListener) {
@@ -422,7 +363,7 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
     //send fresh query, get properties from a master state obtained from user properties later
     // also send across list of all hashtags used in current query
     // sending cachedlist to all queries currently, edit to include only for create queries
-    // props.sendQuery(state.inputParser, {
+    // props.sendQuery(inputParser, {
     //   containerId: props.containerId,
     //   containerName: props.containerName,
     //   userDetails: props.userDetails,
@@ -438,13 +379,13 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
   //prepare new fuse if fuseindices change in the app state
 
   useEffect(() => {
-    if (props && props.sharedFuseIndices && fuse_indices) {
+    if (props && props.sharedFuseIndices && props.sharedFuseIndices) {
       var newopts: any = [];
-      var opts = state.fuseOn;
+      var opts = state.fuseFilters;
       if (opts.cached_list === true && opts.filter) {
         let newOptions: any[] = [];
 
-        fuse_indices.forEach(index => {
+        props.sharedFuseIndices.forEach(index => {
           if (index.tag === opts.filter && index.parents) {
             Object.keys(index.parents).forEach(tag => {
               newOptions.push({
@@ -455,9 +396,7 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
         });
         newopts = [...newOptions];
       } else if (opts.cached_list === true) {
-        newopts = [...newopts, ...fuse_indices];
-      } else if (opts.queryFunctionsStart === true) {
-        newopts = [...newopts, ...queryFunctionsStart];
+        newopts = [...newopts, ...props.sharedFuseIndices];
       } else if (opts.queryFunctionsFuse === true) {
         newopts = [...newopts, ...queryFunctionsFuse];
       }
@@ -476,7 +415,7 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
   return (
     <Wrapper>
       <MainBar
-        inputParser={state.inputParser}
+        inputParser={inputParser}
         input={input}
         handleLastBoxChange={handleChange}
         handleFirstType={handleFirstType}
@@ -486,7 +425,7 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
       {state.inFocus && (
         <DropList>
           <DropDown
-            dropdownOptions={state.matchedRecords}
+            dropdownOptions={matchedRecords}
             handleTagSelection={handleTagSelection}
           />
         </DropList>
