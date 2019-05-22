@@ -2,7 +2,7 @@ import {
   IApplicationState,
   ISyncPrivateStructureAction,
   SYNC_PRIVATE_STRUCTURE
-} from "../typesAndConstants/appTypes";
+} from "./appTypes";
 
 const initialState: IApplicationState = {
   activeCompany: localStorage.getItem("activeCompany"),

@@ -4,7 +4,7 @@ import {
   USER_COLLECTION,
   INFORMATION_SUBCOLLECTION,
   PRIVATE_INFORMATION
-} from "../typesAndConstants/firestoreConstants";
+} from "../config/firestoreConstants";
 import { SyncActiveCompany } from "../modules/appActionCreator";
 
 interface IReturns {
@@ -14,7 +14,7 @@ interface IReturns {
 
 export const getVariableServerPaths = async (): Promise<IReturns> => {
   const state = store.getState();
-  let activeCompany = state.coreCompanyData.activeCompany;
+  let activeCompany = state.app.activeCompany;
 
   const uid = state.authenticationState.uid;
 

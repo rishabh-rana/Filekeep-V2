@@ -2,7 +2,7 @@ import { sendStructuralSearchQueryCreator } from "./structuralSearchActionCreato
 import { ThunkAction } from "redux-thunk";
 import { AppState } from "../../indexReducer";
 import { Action } from "redux";
-import { IStructuralSearchQueryData } from "../../../typesAndConstants/app/structuralSearchTypes";
+import { IStructuralSearchQueryData } from "./structuralSearchTypes";
 
 export const sendStructuralSearchQuery = (
   queryData: IStructuralSearchQueryData

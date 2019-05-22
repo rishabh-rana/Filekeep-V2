@@ -2,7 +2,7 @@ import { firestore } from "../../../config/firebase";
 import {
   COMPANIES_COLLECTION,
   USERS_SUBCOLLECTION
-} from "../../../typesAndConstants/firestoreConstants";
+} from "../../../config/firestoreConstants";
 import { getVariableServerPaths } from "../../../utils/getVariableServerPaths";
 import {
   getDatabaseStructure,
@@ -17,7 +17,7 @@ import {
   PrivateStructureMap,
   PUBLIC_STRUCTURE,
   IDeletionMap
-} from "../../../typesAndConstants/appTypes";
+} from "../../../modules/appTypes";
 import { returnDiffs } from "./helperFunctions";
 import store from "../../../store";
 import { SyncPrivateStructureMap } from "../../../modules/appActionCreator";

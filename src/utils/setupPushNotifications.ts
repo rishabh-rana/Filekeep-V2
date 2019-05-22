@@ -3,7 +3,7 @@ import {
   USER_COLLECTION,
   INFORMATION_SUBCOLLECTION,
   PRIVATE_INFORMATION
-} from "../typesAndConstants/firestoreConstants";
+} from "../config/firestoreConstants";
 import store from "../store";
 import { throwErrorCreator } from "../modules/error/errorActionCreator";
 import { colors } from "../colors";

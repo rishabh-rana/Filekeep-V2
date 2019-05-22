@@ -1,14 +1,10 @@
 import {
-  IFuseIndex,
-  ISyncFuseIndicesAction,
-  SYNC_ROOT_FUSE_INDICES,
-  SYNC_SHARED_FUSE_INDICES,
   PrivateStructureMap,
   ISyncPrivateStructureAction,
   SYNC_PRIVATE_STRUCTURE,
   ISyncActiveCompanyAction,
   SYNC_ACTIVE_COMPANY
-} from "../typesAndConstants/appTypes";
+} from "./appTypes";
 
 export const SyncPrivateStructureMap = (
   privateMap: PrivateStructureMap
@@ -27,21 +23,3 @@ export const SyncActiveCompany = (
     payload: activeCompany
   };
 };
-
-export function SyncRootFuseIndicesCreator(
-  rootFuseIndices: IFuseIndex[]
-): ISyncFuseIndicesAction {
-  return {
-    type: SYNC_ROOT_FUSE_INDICES,
-    payload: rootFuseIndices
-  };
-}
-
-export function SyncSharedFuseIndicesCreator(
-  sharedFuseIndices: IFuseIndex[]
-): ISyncFuseIndicesAction {
-  return {
-    type: SYNC_SHARED_FUSE_INDICES,
-    payload: sharedFuseIndices
-  };
-}

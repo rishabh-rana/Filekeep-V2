@@ -2,12 +2,12 @@ import { combineReducers } from "redux";
 
 import auth from "./auth/authReducer";
 import error from "./error/errorReducer";
-import coreCompanyData from "./appReducer";
+import app from "./appReducer";
 
 const rootReducer = combineReducers({
   authenticationState: auth,
   errorState: error,
-  coreCompanyData
+  app
 });
 
 export default rootReducer;

@@ -2,7 +2,7 @@ import { firestore } from "../../config/firebase";
 import {
   COMPANIES_COLLECTION,
   MAIN_DATA_SUBCOLLECTION
-} from "../../typesAndConstants/firestoreConstants";
+} from "../../config/firestoreConstants";
 import { IParsedQueries } from "./types";
 
 //build the query from the sent options and input

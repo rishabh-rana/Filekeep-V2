@@ -2,7 +2,7 @@ import {
   SEND_STRUCTURAL_SEARCH_QUERY,
   ISendStructuralSearchQueryAction,
   IStructuralSearchQueryData
-} from "../../../typesAndConstants/app/structuralSearchTypes";
+} from "./structuralSearchTypes";
 
 export const sendStructuralSearchQueryCreator = (
   queryData: IStructuralSearchQueryData

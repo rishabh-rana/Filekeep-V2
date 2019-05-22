@@ -2,7 +2,7 @@ import firebase from "firebase/app";
 import { SyncUsers } from "../modules/auth/authActionCreator";
 import store from "../store";
 import mixpanel from "../config/mixpanel";
-import { FOUND_MESSING_WITH_CODE } from "../typesAndConstants/mixpanelConstants";
+import { FOUND_MESSING_WITH_CODE } from "../config/mixpanelConstants";
 
 const getUidInState = (): string | null => {
   const state = store.getState();

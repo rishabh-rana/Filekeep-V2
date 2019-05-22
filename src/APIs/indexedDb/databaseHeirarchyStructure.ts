@@ -1,4 +1,4 @@
-import { IPrivateStructureIndexedDBObject } from "../../typesAndConstants/appTypes";
+import { IPrivateStructureIndexedDBObject } from "../../modules/appTypes";
 import { getVariableServerPaths } from "../../utils/getVariableServerPaths";
 
 const databaseNameConstant = "appBootData";

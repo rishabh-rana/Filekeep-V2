@@ -14,11 +14,11 @@ import {
   queryFunctions
 } from "../../appData/queryFunctions";
 import { IFuseIndex } from "./types";
-import { IStructuralSearchQueryData } from "../../typesAndConstants/app/structuralSearchTypes";
+import { IStructuralSearchQueryData } from "../../modules/app/search/structuralSearchTypes";
 import {
   PrivateStructureMap,
   IPrivateStructureObject
-} from "../../typesAndConstants/appTypes";
+} from "../../modules/appTypes";
 
 //styled component
 const DropList = styled.div`
@@ -434,7 +434,7 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
 
 const mapstate = (state: AppState) => {
   return {
-    sharedFuseIndices: state.coreCompanyData.private_structure
+    sharedFuseIndices: state.app.private_structure
   };
 };
 

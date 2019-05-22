@@ -2,7 +2,7 @@
 import { ThunkAction } from "redux-thunk";
 import { AppState } from "../indexReducer";
 import { Action } from "redux";
-import { IUserData } from "../../typesAndConstants/authTypes";
+import { IUserData } from "./authTypes";
 
 // import actionCreators
 import { SyncUsers } from "./authActionCreator";
@@ -16,8 +16,8 @@ import {
   INFORMATION_SUBCOLLECTION,
   PRIVATE_INFORMATION,
   PUBLIC_INFORMATION
-} from "../../typesAndConstants/firestoreConstants";
-import { TRACK_SIGNIN } from "../../typesAndConstants/mixpanelConstants";
+} from "../../config/firestoreConstants";
+import { TRACK_SIGNIN } from "../../config/mixpanelConstants";
 
 export const signInWithGoogle = (): ThunkAction<
   void,

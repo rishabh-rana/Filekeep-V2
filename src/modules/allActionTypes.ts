@@ -1,13 +1,14 @@
-import { ISyncFuseIndicesAction } from "../typesAndConstants/appTypes";
-import { ISyncUsersAction } from "../typesAndConstants/authTypes";
 import {
-  IRESOLVE_ERROR_ACTION,
-  ITHROW_ERROR_ACTION
-} from "../typesAndConstants/errorTypes";
-import { ISendStructuralSearchQueryAction } from "../typesAndConstants/app/structuralSearchTypes";
+  ISyncActiveCompanyAction,
+  ISyncPrivateStructureAction
+} from "./appTypes";
+import { ISyncUsersAction } from "./auth/authTypes";
+import { IRESOLVE_ERROR_ACTION, ITHROW_ERROR_ACTION } from "./error/errorTypes";
+import { ISendStructuralSearchQueryAction } from "./app/search/structuralSearchTypes";
 
 export type AllActionTypes =
-  | ISyncFuseIndicesAction
+  | ISyncActiveCompanyAction
+  | ISyncPrivateStructureAction
   | ISyncUsersAction
   | IRESOLVE_ERROR_ACTION
   | ITHROW_ERROR_ACTION

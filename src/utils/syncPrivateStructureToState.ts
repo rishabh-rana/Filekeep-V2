@@ -2,7 +2,7 @@ import { getDatabaseStructure } from "../APIs/indexedDb/databaseHeirarchyStructu
 import {
   PRIVATE_STRUCTURE,
   IPrivateStructureIndexedDBObject
-} from "../typesAndConstants/appTypes";
+} from "../modules/appTypes";
 import store from "../store";
 import { SyncPrivateStructureMap } from "../modules/appActionCreator";
 

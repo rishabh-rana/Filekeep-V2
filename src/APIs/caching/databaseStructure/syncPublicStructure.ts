@@ -1,5 +1,5 @@
 import { firestore } from "../../../config/firebase";
-import { COMPANIES_COLLECTION } from "../../../typesAndConstants/firestoreConstants";
+import { COMPANIES_COLLECTION } from "../../../config/firestoreConstants";
 
 import {
   PUBLIC_STRUCTURE,
@@ -10,7 +10,7 @@ import {
   PrivateStructureMap,
   IDeletionMap,
   PRIVATE_STRUCTURE
-} from "../../../typesAndConstants/appTypes";
+} from "../../../modules/appTypes";
 import { returnDiffs } from "./helperFunctions";
 import { getVariableServerPaths } from "../../../utils/getVariableServerPaths";
 import {
@@ -293,5 +293,5 @@ const performPublicSync = async (
 };
 
 const getPrivateStructureFromState = (): PrivateStructureMap | null => {
-  return store.getState().coreCompanyData.private_structure;
+  return store.getState().app.private_structure;
 };

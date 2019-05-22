@@ -4,7 +4,7 @@ import {
   PrivateStructureMap,
   ITagidToTagnameMap,
   IDeletionMap
-} from "../../../typesAndConstants/appTypes";
+} from "../../../modules/appTypes";
 
 // this function compares two arrays and returns the  items that were missing from ArrayOne wrt Array two
 const isArrayEqualWithDiffs = (

@@ -65,8 +65,7 @@ const App: React.FC<IAppProps> = (props: IAppProps) => {
 
 const mapstate = (state: AppState) => {
   return {
-    uid: state.authenticationState.uid,
-    companyData: state.coreCompanyData
+    uid: state.authenticationState.uid
   };
 };
 

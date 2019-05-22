@@ -5,7 +5,7 @@ import styled, { keyframes } from "styled-components";
 import { resolveError } from "../../modules/error/errorActions";
 
 import { AppState } from "../../modules/indexReducer";
-import { IErrorState } from "../../typesAndConstants/errorTypes";
+import { IErrorState } from "../../modules/error/errorTypes";
 
 const comeInFromTop = keyframes`
   0% {
