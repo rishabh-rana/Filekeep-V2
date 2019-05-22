@@ -82,6 +82,7 @@ export const syncPrivateStructure = (): Promise<true> => {
           resolveOnce();
           return;
         }
+
         // successfully got serverData
         const done = await syncOperation(serverData[PRIVATE_STRUCTURE]);
         resolveOnce();
@@ -99,12 +100,12 @@ const syncOperation = async (
     PRIVATE_STRUCTURE
   ) as unknown) as IPrivateStructureIndexedDBObject | false);
 
-  // get names of the heirarchy documents from IDB -> this is kept in sync
+  // get names corresponding to the tagids from IDB -> this is kept in sync
   let tagidToTagname = (await (getDatabaseStructure(
     TAGID_TO_TAGNAME_MAP
   ) as unknown)) as { keyPath: string; data: ITagidToTagnameMap } | false;
 
-  // if no names map found
+  // if no name map found, ask for one from server
   if (!tagidToTagname) {
     const { activeCompany } = await getVariableServerPaths();
     if (!activeCompany) return true;
@@ -121,62 +122,21 @@ const syncOperation = async (
     if (!tagidToTagname) return true;
   }
 
-  let diffs: PrivateStructureMap;
-  let deletionMap: IDeletionMap;
-  // if there is data in IDB
-  if (storedPrivateStructure) {
-    // compare data from server and local, diffs is an Map containing the differces between the two data
-    // deletionMap has the felds that need to be deleted from the localstructure
-    ({ diffs, deletionMap } = returnDiffs(
-      serverData,
-      storedPrivateStructure.data,
-      tagidToTagname.data
-    ));
+  const { copyOfServerData } = returnDiffs(
+    serverData,
+    storedPrivateStructure ? storedPrivateStructure.data : false,
+    tagidToTagname.data
+  );
 
-    if (deletionMap) {
-      // these tags need to be deleted
-      const affectedtags = Object.keys(deletionMap);
-      affectedtags.forEach(tag => {
-        if (
-          deletionMap[tag] &&
-          deletionMap[tag].mainTag &&
-          storedPrivateStructure
-        ) {
-          // delete these tags, from an mutable structure from IDB
-          storedPrivateStructure.data.delete(tag);
-        }
-      });
-    }
-    // if there were no differences between the data, no need to do anything, everything is updated
-    if (diffs.size === 0 && Object.keys(deletionMap).length === 0) {
-      return true;
-    }
-    // else, execute the diffs
-    const diffIterator = diffs.entries();
-    let currentDiff = diffIterator.next();
-
-    while (!currentDiff.done) {
-      // this may add or modify tag pertaining to a tag on the localstore
-      storedPrivateStructure.data.set(
-        currentDiff.value[0],
-        currentDiff.value[1]
-      );
-      currentDiff = diffIterator.next();
-    }
+  if (copyOfServerData) {
     // add it to IDB for future reference and offline caching
-    addDatabaseStructureData(storedPrivateStructure);
-    // sync state with new object, this will do on every realtime sync
-    store.dispatch(SyncPrivateStructureMap(storedPrivateStructure.data));
-    return true;
-  } else {
-    // this means no data was there in IDB, we just copy the entire public data in this case over to IDB and state
-    // this might mean either IDB was emptied or error or first time sync
-    ({ diffs } = returnDiffs(serverData, null, tagidToTagname.data));
     addDatabaseStructureData({
       keyPath: PRIVATE_STRUCTURE,
-      data: diffs
+      data: copyOfServerData
     });
-    store.dispatch(SyncPrivateStructureMap(diffs));
-    return true;
+    // sync state with new object, this will do on every realtime sync
+    store.dispatch(SyncPrivateStructureMap(copyOfServerData));
   }
+
+  return true;
 };

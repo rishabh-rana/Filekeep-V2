@@ -1,5 +1,8 @@
 import { firestore } from "../../../config/firebase";
-import { COMPANIES_COLLECTION } from "../../../config/firestoreConstants";
+import {
+  COMPANIES_COLLECTION,
+  USERS_SUBCOLLECTION
+} from "../../../config/firestoreConstants";
 
 import {
   PUBLIC_STRUCTURE,
@@ -9,7 +12,8 @@ import {
   IPrivateStructureIndexedDBObject,
   PrivateStructureMap,
   IDeletionMap,
-  PRIVATE_STRUCTURE
+  PRIVATE_STRUCTURE,
+  IPrivateStructureObject
 } from "../../../modules/appTypes";
 import { returnDiffs } from "./helperFunctions";
 import { getVariableServerPaths } from "../../../utils/getVariableServerPaths";
@@ -38,6 +42,7 @@ export const syncPublicStructure = async (): Promise<boolean> => {
         return;
       }
 
+      // sync nameMap
       if (serverData[TAGID_TO_TAGNAME_MAP]) {
         // sync name map
         addDatabaseStructureData({
@@ -45,7 +50,7 @@ export const syncPublicStructure = async (): Promise<boolean> => {
           data: serverData[TAGID_TO_TAGNAME_MAP]
         });
       }
-
+      // execute sync
       const success = await performPublicSync(
         serverData[PUBLIC_STRUCTURE],
         serverData[TAGID_TO_TAGNAME_MAP]
@@ -64,140 +69,21 @@ const performPublicSync = async (
     PUBLIC_STRUCTURE
   ) as unknown) as IPrivateStructureIndexedDBObject | false);
 
-  // publicStructureDiffs denote the changes between server and local data
-  let publicStructureDiffs: PrivateStructureMap | false;
-  // this map contains tags to be deleted
-  let deletionDiffs: IDeletionMap | null = null;
-
-  if (!storedPublicStructure && publicStructureFromServer) {
-    // no local structure available, and we got response from server, just sync entire thing from server
-    // diffs will denote the complete Map to take union with the private structure
-    const { diffs } = returnDiffs(
-      publicStructureFromServer,
-      null,
-      tagIdToTagNameMap
-    );
-    publicStructureDiffs = diffs;
-  } else if (storedPublicStructure && publicStructureFromServer) {
-    // if local structure was present, compare and return diffs to be executed, along with deletionMap
-    const { diffs, deletionMap } = returnDiffs(
-      publicStructureFromServer,
-      storedPublicStructure.data,
-      tagIdToTagNameMap
-    );
-
-    publicStructureDiffs = diffs;
-    deletionDiffs = deletionMap;
-  } else {
-    // no response from server
-    publicStructureDiffs = false;
-  }
-
-  if (publicStructureDiffs !== false && publicStructureDiffs.size === 0) {
-    // zero size diffs imply no diffs generated
-    publicStructureDiffs = false;
-  }
-
-  if (
-    storedPublicStructure &&
-    publicStructureDiffs === false &&
-    deletionDiffs &&
-    Object.keys(deletionDiffs).length === 0
-  ) {
-    // if no diffs and no deletionDiffs exist, we are in sync, dont do anything
-    return true;
-  } else if (!storedPublicStructure && publicStructureDiffs) {
-    // first time sync, so update IDB public_structure path
-
+  const { copyOfServerData, deletionMap } = returnDiffs(
+    publicStructureFromServer,
+    storedPublicStructure ? storedPublicStructure.data : false,
+    tagIdToTagNameMap
+  );
+  // there were changes, this !== false, in this case, sync public structure in IDB
+  if (copyOfServerData) {
     addDatabaseStructureData({
       keyPath: PUBLIC_STRUCTURE,
-      data: publicStructureDiffs
+      data: copyOfServerData
     });
-  } else if (
-    storedPublicStructure &&
-    publicStructureDiffs === false &&
-    deletionDiffs
-  ) {
-    // no positiveDifferences but deletions detected
-    const affectedTags = Object.keys(deletionDiffs);
-
-    affectedTags.forEach(tag => {
-      if (deletionDiffs && storedPublicStructure) {
-        if (deletionDiffs[tag].mainTag) {
-          storedPublicStructure.data.delete(tag);
-        } else if (deletionDiffs[tag].parents) {
-          const currentData = storedPublicStructure.data.get(tag);
-          const deleteTheseParents = deletionDiffs[tag].parents;
-          if (deleteTheseParents && currentData) {
-            deleteTheseParents.forEach(item => {
-              currentData.parents.splice(currentData.parents.indexOf(item), 1);
-            });
-          }
-          if (currentData) {
-            storedPublicStructure.data.set(tag, currentData);
-          }
-        }
-      }
-    });
-    // delete the tags or parents as instructed by deletionMap, and sync to IDB
-    addDatabaseStructureData(storedPublicStructure);
-  } else if (storedPublicStructure && publicStructureDiffs) {
-    // some positive differences were found
-    const diffs = publicStructureDiffs.entries();
-
-    let currentDiff = diffs.next();
-
-    if (deletionDiffs) {
-      // there exist deletion commands, handle them here
-      const affectedTags = Object.keys(deletionDiffs);
-
-      affectedTags.forEach(tag => {
-        if (deletionDiffs && storedPublicStructure) {
-          if (deletionDiffs[tag].mainTag) {
-            storedPublicStructure.data.delete(tag);
-          } else if (deletionDiffs[tag].parents) {
-            const currentData = storedPublicStructure.data.get(tag);
-            const deleteTheseParents = deletionDiffs[tag].parents;
-            if (deleteTheseParents && currentData) {
-              deleteTheseParents.forEach(item => {
-                currentData.parents.splice(
-                  currentData.parents.indexOf(item),
-                  1
-                );
-              });
-            }
-            if (currentData) {
-              storedPublicStructure.data.set(tag, currentData);
-            }
-          }
-        }
-      });
-    }
-    // handle modifications and additions
-    while (!currentDiff.done) {
-      storedPublicStructure.data.set(
-        currentDiff.value[0],
-        currentDiff.value[1]
-      );
-      currentDiff = diffs.next();
-    }
-    // sync now up-to-date structure to IDB
-    addDatabaseStructureData(storedPublicStructure);
   }
 
-  //
-  //
-  //
-  // SYNCED PUBLIC STRUTURE WITH IDB NOW ONWARDS TO TAKE UNION WITH PRIVATE STRUCTURE
-  //
-  //
-  //
-
   // now we need to union this PublicMap with our private structure, if there were any changes detected to the public structure
-  if (
-    publicStructureDiffs ||
-    (deletionDiffs && Object.keys(deletionDiffs).length !== 0)
-  ) {
+  if (copyOfServerData) {
     // get private structure from state, as the syncPrivateStructure() executes before this function call, we get an updated private structure from this call
     const privateStructure = getPrivateStructureFromState();
 
@@ -215,15 +101,17 @@ const performPublicSync = async (
     while (!currentPrivateObject.done) {
       // handle deletion
       if (
-        deletionDiffs &&
-        deletionDiffs[currentPrivateObject.value[0]] &&
-        deletionDiffs[currentPrivateObject.value[0]].mainTag
+        deletionMap &&
+        deletionMap[currentPrivateObject.value[0]] &&
+        deletionMap[currentPrivateObject.value[0]].mainTag
       ) {
         // do nothing, as in do not copy this tag as it has been deleted
       } else {
-        finalStructure.set(currentPrivateObject.value[0], {
-          ...currentPrivateObject.value[1],
-          parents: [...currentPrivateObject.value[1].parents]
+        const obj = currentPrivateObject.value[1];
+        finalStructure.set(obj.tag, {
+          tag: obj.tag,
+          tagName: obj.tagName,
+          parents: [...obj.parents]
         });
       }
 
@@ -231,55 +119,42 @@ const performPublicSync = async (
     }
     // copies the priateStructure to finalStructure variable, that is made a mutable copy
 
-    // if differences were found, execute them on finalStructure
-    if (publicStructureDiffs) {
-      const publicDiffs = publicStructureDiffs.entries();
-      let currentDiff = publicDiffs.next();
+    // take union
+    const iterator = copyOfServerData.values();
+    let currentIterator = iterator.next();
 
-      while (!currentDiff.done) {
-        const tag = currentDiff.value[0];
-        // if we need to modify a tag on finalStructure
-        if (finalStructure.has(tag)) {
-          let parents: string[];
-          const objectOfFinalStructure = finalStructure.get(tag);
-          if (objectOfFinalStructure) {
-            parents = [
-              ...currentDiff.value[1].parents,
-              ...objectOfFinalStructure.parents
-            ];
-            const helper: any = {};
-            parents.forEach(item => {
-              helper[item] = true;
-            });
-            //handle deletion
-            if (deletionDiffs && deletionDiffs[tag]) {
-              // deletion commands exist for this tag
-              if (deletionDiffs[tag].parents !== undefined) {
-                // deletion exist for parents
-                //@ts-ignore
-                deletionDiffs[tag].parents.forEach(item => {
-                  delete helper[item];
-                });
-              }
-            }
-            parents = Object.keys(helper);
-            finalStructure.set(tag, {
-              tag,
-              tagName: currentDiff.value[1].tagName,
-              parents
-            });
-          }
-        } else {
-          // there was no such tag on finalStructure, simply add this one
-          finalStructure.set(tag, {
-            tag,
-            tagName: currentDiff.value[1].tagName,
-            parents: [...currentDiff.value[1].parents]
+    while (!currentIterator.done) {
+      const { tag } = currentIterator.value;
+      if (finalStructure.has(tag)) {
+        // we need to take union now
+        const serverParents = currentIterator.value.parents;
+        //@ts-ignore
+        const localParents = (finalStructure.get(tag)
+          .parents as unknown) as string[];
+        const helper: any = {};
+        [...serverParents, ...localParents].forEach(tag => {
+          helper[tag] = true;
+        });
+
+        if (deletionMap[tag] && deletionMap[tag].parents) {
+          //@ts-ignore
+          deletionMap[tag].parents.forEach(deleteTag => {
+            delete helper[deleteTag];
           });
         }
-        currentDiff = publicDiffs.next();
+
+        finalStructure.set(tag, {
+          tag,
+          tagName: currentIterator.value.tagName,
+          parents: Object.keys(helper)
+        });
+      } else {
+        // this is a new entry, add directly
+        finalStructure.set(tag, currentIterator.value);
       }
+      currentIterator = iterator.next();
     }
+
     // now finalStructure represents union of Public Structure and Private Structure, both synced realtime to server!
     // set this to state, and cache in IDB
     store.dispatch(SyncPrivateStructureMap(finalStructure));
@@ -287,6 +162,7 @@ const performPublicSync = async (
       keyPath: PRIVATE_STRUCTURE,
       data: finalStructure
     });
+    // syncWithFireStore(finalStructure);
   }
   // exit call
   return true;
@@ -294,4 +170,26 @@ const performPublicSync = async (
 
 const getPrivateStructureFromState = (): PrivateStructureMap | null => {
   return store.getState().app.private_structure;
+};
+
+const syncWithFireStore = async (
+  finalStructure: PrivateStructureMap
+): Promise<void> => {
+  const { activeCompany, uid } = await getVariableServerPaths();
+  if (activeCompany && uid) {
+    //  sync to server
+    const arrayForServer: IRawPrivateStructureObject[] = [];
+    const iterator = finalStructure.values();
+    let currentIterator = iterator.next();
+
+    while (!currentIterator.done) {
+      arrayForServer.push({
+        tag: currentIterator.value.tag,
+        parents: currentIterator.value.parents
+      });
+      currentIterator = iterator.next();
+    }
+
+    // now send arrayForServer to the user's doc in the company using cloud function endpoint
+  }
 };
