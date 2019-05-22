@@ -1,26 +1,21 @@
 import {
-  IAppState,
-  ISyncFuseIndicesAction,
-  SYNC_ROOT_FUSE_INDICES,
-  SYNC_SHARED_FUSE_INDICES
+  IApplicationState,
+  ISyncPrivateStructureAction,
+  SYNC_PRIVATE_STRUCTURE
 } from "../typesAndConstants/appTypes";
 
-const initialState: IAppState = {
+const initialState: IApplicationState = {
   activeCompany: localStorage.getItem("activeCompany"),
-  root_fuse_indices: false,
-  shared_fuse_indices: false
+  private_structure: null
 };
 
 const reducer = (
   state = initialState,
-  action: ISyncFuseIndicesAction
-): IAppState => {
+  action: ISyncPrivateStructureAction
+): IApplicationState => {
   switch (action.type) {
-    case SYNC_ROOT_FUSE_INDICES:
-      return { ...state, root_fuse_indices: action.payload };
-
-    case SYNC_SHARED_FUSE_INDICES:
-      return { ...state, shared_fuse_indices: action.payload };
+    case SYNC_PRIVATE_STRUCTURE:
+      return { ...state, private_structure: action.payload };
   }
 
   return state;

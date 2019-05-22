@@ -1,22 +1,20 @@
-import {
-  IDatabaseStructure_INDEXEDDB,
-  IFuseIndices_INDEXEDDB
-} from "../../typesAndConstants/appTypes";
+import { IPrivateStructureIndexedDBObject } from "../../typesAndConstants/appTypes";
+import { getVariableServerPaths } from "../../utils/getVariableServerPaths";
 
-const databaseNameConstant = "coreCompanyData";
+const databaseNameConstant = "appBootData";
 const databaseNumber = 1;
 const MAIN_OBJSTORE = "mainStore";
 const MAIN_OBJSTORE_KEYPATH = "keyPath";
 
-type ReturnData = Promise<
-  IDatabaseStructure_INDEXEDDB | IFuseIndices_INDEXEDDB | false
->;
+type ReturnData = Promise<IPrivateStructureIndexedDBObject | false>;
 
-export const getDatabaseStructure = (keyPath: string): ReturnData => {
-  const promise: ReturnData = new Promise((resolve, reject) => {
+export const getDatabaseStructure = async (
+  keyPath: string
+): Promise<IPrivateStructureIndexedDBObject | false> => {
+  const promise: ReturnData = new Promise(async (resolve, reject) => {
     if (!window.indexedDB) resolve(false);
 
-    const activeCompany = localStorage.getItem("activeCompany");
+    const { activeCompany } = await getVariableServerPaths();
 
     if (!activeCompany) resolve(false);
 
@@ -75,13 +73,13 @@ export const getDatabaseStructure = (keyPath: string): ReturnData => {
   return promise;
 };
 
-type InputData = IDatabaseStructure_INDEXEDDB | IFuseIndices_INDEXEDDB;
-
-export const addDatabaseStructureData = (data: InputData): Promise<boolean> => {
-  const promise: Promise<boolean> = new Promise((resolve, reject) => {
+export const addDatabaseStructureData = (
+  data: IPrivateStructureIndexedDBObject
+): Promise<boolean> => {
+  const promise: Promise<boolean> = new Promise(async (resolve, reject) => {
     if (!window.indexedDB) resolve(false);
 
-    const activeCompany = localStorage.getItem("activeCompany");
+    const { activeCompany } = await getVariableServerPaths();
 
     if (!activeCompany) resolve(false);
 

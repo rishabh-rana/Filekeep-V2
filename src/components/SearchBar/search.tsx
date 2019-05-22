@@ -7,12 +7,18 @@ import Fuse from "fuse.js";
 
 import { connect } from "react-redux";
 import { AppState } from "../../modules/indexReducer";
+import { sendStructuralSearchQuery } from "../../modules/app/search/structuralSearchActions";
 
 import {
   queryFunctionsFuse,
   queryFunctions
 } from "../../appData/queryFunctions";
 import { IFuseIndex } from "./types";
+import { IStructuralSearchQueryData } from "../../typesAndConstants/app/structuralSearchTypes";
+import {
+  PrivateStructureMap,
+  IPrivateStructureObject
+} from "../../typesAndConstants/appTypes";
 
 //styled component
 const DropList = styled.div`
@@ -30,7 +36,8 @@ const Wrapper = styled.div`
 // interfaces
 
 interface IProps {
-  sharedFuseIndices: IFuseIndex[] | false;
+  sharedFuseIndices: PrivateStructureMap | null;
+  sendStructuralSearchQuery(queryData: IStructuralSearchQueryData): any;
 }
 
 //state description:
@@ -61,9 +68,12 @@ enum Constants {
 const noIndicesError = "Cannot load data, you may be offline";
 
 // fuse object
-let fuse: Fuse<IFuseIndex, Fuse.FuseOptions<IFuseIndex>> | null = null;
+let fuse: Fuse<
+  IPrivateStructureObject,
+  Fuse.FuseOptions<IPrivateStructureObject>
+> | null = null;
 // fuse options
-const FuseOptions: Fuse.FuseOptions<IFuseIndex> = {
+const FuseOptions: Fuse.FuseOptions<IPrivateStructureObject> = {
   threshold: 0.6,
   location: 0,
   distance: 100,
@@ -104,7 +114,9 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
 
   //unmount DropDown by setting inFocus: false
   const handleBlur = () => {
-    setState({ ...state, inFocus: false });
+    setTimeout(() => {
+      setState({ ...state, inFocus: false });
+    }, 100);
   };
 
   // this executes when input changes, handles Matching input with FuseIndices
@@ -157,7 +169,9 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
     if (e.key === "Enter" && matchedRecords.length === 0) sendQuery();
   };
 
-  const getMatchesStringArray = (match: IFuseIndex[]): string[] => {
+  const getMatchesStringArray = (
+    match: IPrivateStructureObject[]
+  ): string[] => {
     let matchStringArray: string[] = [];
     match.forEach((obj: any) => {
       matchStringArray.push(obj.tag);
@@ -246,6 +260,14 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
 
   // set options for next word, and display possible next word options in dropdown before typing
   const repairFuse = (filter: string | null, filterOn: string) => {
+    let fuseIndices: IPrivateStructureObject[];
+
+    if (props.sharedFuseIndices) {
+      fuseIndices = Array.from(props.sharedFuseIndices.values());
+    } else {
+      return;
+    }
+
     if (props.sharedFuseIndices) {
       if (filterOn === "in" && filter) {
         let newOptions: any[] = [];
@@ -273,7 +295,7 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
         fuse = new Fuse(newOptions, FuseOptions);
       } else if (filterOn === "all") {
         // store the fuse details
-        const fuseIndex = [...props.sharedFuseIndices, ...queryFunctionsFuse];
+        const fuseIndex = [...fuseIndices, ...queryFunctionsFuse];
         setState({
           ...state,
           fuseFilters: {
@@ -281,8 +303,8 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
             queryFunctionsFuse: true
           }
         });
-        changeMatchedRecords(getMatchesStringArray(fuseIndex.slice(0, 3)));
-        fuse = new Fuse(fuseIndex, FuseOptions);
+        // changeMatchedRecords(getMatchesStringArray(fuseIndex.slice(0, 3)));
+        // fuse = new Fuse(fuseIndex, FuseOptions);
       } else if (filterOn === "functionsOnly") {
         setState({
           ...state,
@@ -291,11 +313,11 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
           }
         });
 
-        changeMatchedRecords(
-          getMatchesStringArray(queryFunctionsFuse.slice(0, 3))
-        );
+        // changeMatchedRecords(
+        //   getMatchesStringArray(queryFunctionsFuse.slice(0, 3))
+        // );
 
-        fuse = new Fuse(queryFunctionsFuse, FuseOptions);
+        // fuse = new Fuse(queryFunctionsFuse, FuseOptions);
       } else if (filterOn === "cachedListOnly") {
         setState({
           ...state,
@@ -304,11 +326,9 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
           }
         });
 
-        changeMatchedRecords(
-          getMatchesStringArray(props.sharedFuseIndices.slice(0, 3))
-        );
+        changeMatchedRecords(getMatchesStringArray(fuseIndices.slice(0, 3)));
 
-        fuse = new Fuse(props.sharedFuseIndices, FuseOptions);
+        fuse = new Fuse(fuseIndices, FuseOptions);
       }
     } else {
       changeMatchedRecords([noIndicesError]);
@@ -345,35 +365,12 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
 
   //send query to firestore
   const sendQuery = () => {
-    //IMPORTANT
-    //query, {augmentors} //ALWAYS DISPATCH Augmentor>Properties >>properties is important
-    //remove previous listeners, the removeEventListener is an array of functions to be called
-    // flush current structure and data
-    // if (
-    //   inputParser[0] !== "add" &&
-    //   inputParser[0] !== "create"
-    // ) {
-    //   props.flushArchives();
-    //   if (props.removeEventListener) {
-    //     props.removeEventListener.forEach(rmls => {
-    //       rmls();
-    //     });
-    //   }
-    // }
-    //send fresh query, get properties from a master state obtained from user properties later
-    // also send across list of all hashtags used in current query
-    // sending cachedlist to all queries currently, edit to include only for create queries
-    // props.sendQuery(inputParser, {
-    //   containerId: props.containerId,
-    //   containerName: props.containerName,
-    //   userDetails: props.userDetails,
-    //   properties: {
-    //     depth: 2,
-    //     style: "list",
-    //     structureBy: "tag"
-    //   },
-    //   cached_list: props.cached_list
-    // });
+    //remember to remove any current event listnerrs if required, or handle this in tabbed behaviour
+
+    props.sendStructuralSearchQuery({
+      inputParser: inputParser,
+      viewOptions: { displayType: "kanban", structureBy: "tag" }
+    });
   };
 
   //prepare new fuse if fuseindices change in the app state
@@ -396,7 +393,7 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
         });
         newopts = [...newOptions];
       } else if (opts.cached_list === true) {
-        newopts = [...newopts, ...props.sharedFuseIndices];
+        // newopts = [...newopts, ...props.sharedFuseIndices];
       } else if (opts.queryFunctionsFuse === true) {
         newopts = [...newopts, ...queryFunctionsFuse];
       }
@@ -430,17 +427,18 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
           />
         </DropList>
       )}
+      <button onClick={sendQuery}>Search</button>
     </Wrapper>
   );
 };
 
 const mapstate = (state: AppState) => {
   return {
-    sharedFuseIndices: state.coreCompanyData.shared_fuse_indices
+    sharedFuseIndices: state.coreCompanyData.private_structure
   };
 };
 
 export default connect(
   mapstate,
-  null
+  { sendStructuralSearchQuery }
 )(SearchBar);

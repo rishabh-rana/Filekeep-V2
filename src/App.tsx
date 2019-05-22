@@ -11,10 +11,11 @@ import { verifyLogin, LogoutAfterTimeout } from "./utils/verifyLogin";
 import { BrowserRouter, Route } from "react-router-dom";
 import ErrorPopup from "./components/ErrorHandlers/ErrorPopup";
 
-import { handleDatabaseHeirarchyStructureCaching } from "./APIs/caching/handleCaching";
+import { updateAndCacheStructure } from "./APIs/caching/databaseStructure/syncPublicStructure";
 import { syncFuseIndicesFromDB } from "./utils/syncFuseIndices";
 
 import SearchBar from "./components/SearchBar/search";
+import { handleCachingStructure } from "./APIs/caching/databaseStructure/handleCaching";
 
 interface IAppProps {
   uid: string | null;
@@ -24,7 +25,7 @@ interface IAppProps {
 const App: React.FC<IAppProps> = (props: IAppProps) => {
   const setupFuseIndices = async () => {
     await syncFuseIndicesFromDB();
-    handleDatabaseHeirarchyStructureCaching();
+    handleCachingStructure();
   };
 
   useEffect(() => {
@@ -55,7 +56,7 @@ const App: React.FC<IAppProps> = (props: IAppProps) => {
     <ErrorBoundary>
       <BrowserRouter>
         <React.Fragment>
-          <Route path="/" component={SearchBar} />
+          <Route path="/" component={() => <div>Hello React</div>} />
           <Route path="/" component={ErrorPopup} />
         </React.Fragment>
       </BrowserRouter>

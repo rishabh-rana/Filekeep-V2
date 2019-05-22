@@ -97,7 +97,11 @@ const DropDown: React.FC<IProps> = React.memo(
       <DropItemTray key={activeItem}>
         {props.dropdownOptions.map((item: string, index: number) => {
           return (
-            <DropItem key={index} active={index === activeItem}>
+            <DropItem
+              key={index}
+              active={index === activeItem}
+              onClick={() => props.handleTagSelection(item)}
+            >
               {item}
             </DropItem>
           );
