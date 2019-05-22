@@ -1,10 +1,15 @@
 import { getDatabaseStructure } from "../APIs/indexedDb/databaseHeirarchyStructure";
 import {
   PRIVATE_STRUCTURE,
-  IPrivateStructureIndexedDBObject
+  IPrivateStructureIndexedDBObject,
+  TAGID_TO_TAGNAME_MAP,
+  ITagidToTagnameMap
 } from "../modules/appTypes";
 import store from "../store";
-import { SyncPrivateStructureMap } from "../modules/appActionCreator";
+import {
+  SyncPrivateStructureMap,
+  SyncNameMap
+} from "../modules/appActionCreator";
 
 export const syncPrivateStructureToState = async (): Promise<boolean> => {
   const promise: Promise<boolean> = new Promise(async (resolve, reject) => {
@@ -18,6 +23,16 @@ export const syncPrivateStructureToState = async (): Promise<boolean> => {
     // if taglist existed, update state
     if (data !== false) {
       store.dispatch(SyncPrivateStructureMap(data.data));
+    } else {
+      isSuccess = false;
+    }
+
+    const nameMap = (await (getDatabaseStructure(
+      TAGID_TO_TAGNAME_MAP
+    ) as unknown)) as ITagidToTagnameMap | false;
+
+    if (nameMap !== false) {
+      store.dispatch(SyncNameMap(nameMap));
     } else {
       isSuccess = false;
     }

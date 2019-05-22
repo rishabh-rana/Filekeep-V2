@@ -69,15 +69,15 @@ export const syncPrivateStructure = (): Promise<true> => {
             resolveOnce();
             return;
           }
-          // update the private asets
-          firestore
-            .collection(COMPANIES_COLLECTION)
-            .doc(activeCompany)
-            .collection(USERS_SUBCOLLECTION)
-            .doc(uid)
-            .update({
-              [PRIVATE_STRUCTURE]: data[PUBLIC_STRUCTURE]
-            });
+          // update the private assets using a cloud function later
+          // firestore
+          //   .collection(COMPANIES_COLLECTION)
+          //   .doc(activeCompany)
+          //   .collection(USERS_SUBCOLLECTION)
+          //   .doc(uid)
+          //   .update({
+          //     [PRIVATE_STRUCTURE]: data[PUBLIC_STRUCTURE]
+          //   });
 
           resolveOnce();
           return;

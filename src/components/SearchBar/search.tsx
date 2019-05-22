@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import DropDown from "./search/dropdownResults";
 import MainBar from "./search/searchBarUI";
 
@@ -7,18 +7,19 @@ import Fuse from "fuse.js";
 
 import { connect } from "react-redux";
 import { AppState } from "../../modules/indexReducer";
-import { sendStructuralSearchQuery } from "../../modules/app/search/structuralSearchActions";
+import { sendStructuralSearchQueryCreator } from "../../modules/app/search/structuralSearchActionCreator";
 
 import {
   queryFunctionsFuse,
   queryFunctions
 } from "../../appData/queryFunctions";
-import { IFuseIndex } from "./types";
 import { IStructuralSearchQueryData } from "../../modules/app/search/structuralSearchTypes";
 import {
   PrivateStructureMap,
-  IPrivateStructureObject
+  IPrivateStructureObject,
+  ITagidToTagnameMap
 } from "../../modules/appTypes";
+import { Dispatch } from "redux";
 
 //styled component
 const DropList = styled.div`
@@ -37,7 +38,8 @@ const Wrapper = styled.div`
 
 interface IProps {
   sharedFuseIndices: PrivateStructureMap | null;
-  sendStructuralSearchQuery(queryData: IStructuralSearchQueryData): any;
+  tagIdToNameMap: ITagidToTagnameMap | null;
+  sendStructuralSearchQuery(queryData: IStructuralSearchQueryData): void;
 }
 
 //state description:
@@ -79,7 +81,7 @@ const FuseOptions: Fuse.FuseOptions<IPrivateStructureObject> = {
   distance: 100,
   minMatchCharLength: 1,
   shouldSort: true,
-  keys: ["tag"]
+  keys: ["tagName"]
 };
 //initial state
 const initialState: IState = {
@@ -170,11 +172,11 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
   };
 
   const getMatchesStringArray = (
-    match: IPrivateStructureObject[]
+    match: IPrivateStructureObject[] | { tagName: string }[]
   ): string[] => {
     let matchStringArray: string[] = [];
     match.forEach((obj: any) => {
-      matchStringArray.push(obj.tag);
+      matchStringArray.push(obj.tagName);
     });
 
     return matchStringArray;
@@ -206,7 +208,7 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
           .slice(0, Constants.numberofResults);
 
         //if match is an exact match, remove the dropdown results, without setting stopDelayMatchingTimeout for quick unmount
-        if (match && match[0] && match[0].tag === inputRef.current) {
+        if (match && match[0] && match[0].tagName === inputRef.current) {
           handleFuserepair(inputRef.current);
           setState({
             ...state,
@@ -260,23 +262,20 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
 
   // set options for next word, and display possible next word options in dropdown before typing
   const repairFuse = (filter: string | null, filterOn: string) => {
-    let fuseIndices: IPrivateStructureObject[];
-
-    if (props.sharedFuseIndices) {
-      fuseIndices = Array.from(props.sharedFuseIndices.values());
-    } else {
+    if (!props.sharedFuseIndices) {
       return;
     }
 
-    if (props.sharedFuseIndices) {
+    if (props.sharedFuseIndices && props.tagIdToNameMap) {
       if (filterOn === "in" && filter) {
         let newOptions: any[] = [];
 
-        props.sharedFuseIndices.forEach(index => {
-          if (index.tag === filter && index.parents) {
-            Object.keys(index.parents).forEach(tag => {
+        Array.from(props.sharedFuseIndices.values()).forEach(index => {
+          if (index.tagName === filter && index.parents) {
+            index.parents.forEach(tag => {
               newOptions.push({
-                tag
+                //@ts-ignore
+                tagName: props.tagIdToNameMap[tag]
               });
             });
           }
@@ -295,7 +294,10 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
         fuse = new Fuse(newOptions, FuseOptions);
       } else if (filterOn === "all") {
         // store the fuse details
-        const fuseIndex = [...fuseIndices, ...queryFunctionsFuse];
+        const fuseIndex = [
+          ...Array.from(props.sharedFuseIndices.values()),
+          ...queryFunctionsFuse
+        ];
         setState({
           ...state,
           fuseFilters: {
@@ -303,7 +305,7 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
             queryFunctionsFuse: true
           }
         });
-        // changeMatchedRecords(getMatchesStringArray(fuseIndex.slice(0, 3)));
+        changeMatchedRecords(getMatchesStringArray(fuseIndex.slice(0, 3)));
         // fuse = new Fuse(fuseIndex, FuseOptions);
       } else if (filterOn === "functionsOnly") {
         setState({
@@ -313,12 +315,13 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
           }
         });
 
-        // changeMatchedRecords(
-        //   getMatchesStringArray(queryFunctionsFuse.slice(0, 3))
-        // );
+        changeMatchedRecords(
+          getMatchesStringArray(queryFunctionsFuse.slice(0, 3))
+        );
 
         // fuse = new Fuse(queryFunctionsFuse, FuseOptions);
       } else if (filterOn === "cachedListOnly") {
+        let fuseIndices = Array.from(props.sharedFuseIndices.values());
         setState({
           ...state,
           fuseFilters: {
@@ -366,9 +369,28 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
   //send query to firestore
   const sendQuery = () => {
     //remember to remove any current event listnerrs if required, or handle this in tabbed behaviour
+    if (!props.tagIdToNameMap) return;
+
+    const reverseNameMap: any = {};
+
+    Object.keys(props.tagIdToNameMap).forEach(tag => {
+      //@ts-ignore
+      reverseNameMap[props.tagIdToNameMap[tag]] = tag;
+    });
+
+    const newInputParser: string[] = [];
+    inputParser.forEach(tagName => {
+      if (reverseNameMap[tagName]) {
+        // replace names by tags
+        newInputParser.push(reverseNameMap[tagName]);
+      } else {
+        // for functions
+        newInputParser.push(tagName);
+      }
+    });
 
     props.sendStructuralSearchQuery({
-      inputParser: inputParser,
+      inputParser: newInputParser,
       viewOptions: { displayType: "kanban", structureBy: "tag" }
     });
   };
@@ -376,24 +398,30 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
   //prepare new fuse if fuseindices change in the app state
 
   useEffect(() => {
-    if (props && props.sharedFuseIndices && props.sharedFuseIndices) {
+    if (
+      props &&
+      props.sharedFuseIndices &&
+      props.sharedFuseIndices &&
+      props.tagIdToNameMap
+    ) {
       var newopts: any = [];
       var opts = state.fuseFilters;
       if (opts.cached_list === true && opts.filter) {
         let newOptions: any[] = [];
 
-        props.sharedFuseIndices.forEach(index => {
+        Array.from(props.sharedFuseIndices.values()).forEach(index => {
           if (index.tag === opts.filter && index.parents) {
-            Object.keys(index.parents).forEach(tag => {
+            index.parents.forEach(tag => {
               newOptions.push({
-                tag
+                //@ts-ignore
+                tagName: props.tagIdToNameMap[tag]
               });
             });
           }
         });
         newopts = [...newOptions];
       } else if (opts.cached_list === true) {
-        // newopts = [...newopts, ...props.sharedFuseIndices];
+        newopts = [...newopts, ...Array.from(props.sharedFuseIndices.values())];
       } else if (opts.queryFunctionsFuse === true) {
         newopts = [...newopts, ...queryFunctionsFuse];
       }
@@ -434,11 +462,19 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
 
 const mapstate = (state: AppState) => {
   return {
-    sharedFuseIndices: state.app.private_structure
+    sharedFuseIndices: state.app.private_structure,
+    tagIdToNameMap: state.app.tagIdToNameMap
+  };
+};
+
+const mapdispatch = (dispatch: Dispatch) => {
+  return {
+    sendStructuralSearchQuery: (queryData: IStructuralSearchQueryData) =>
+      dispatch(sendStructuralSearchQueryCreator(queryData))
   };
 };
 
 export default connect(
   mapstate,
-  { sendStructuralSearchQuery }
+  mapdispatch
 )(SearchBar);

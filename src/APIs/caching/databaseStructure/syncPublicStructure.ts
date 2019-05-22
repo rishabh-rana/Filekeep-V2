@@ -22,7 +22,10 @@ import {
   addDatabaseStructureData
 } from "../../indexedDb/databaseHeirarchyStructure";
 import store from "../../../store";
-import { SyncPrivateStructureMap } from "../../../modules/appActionCreator";
+import {
+  SyncPrivateStructureMap,
+  SyncNameMap
+} from "../../../modules/appActionCreator";
 
 // sync public asets from server to the private structure on the server, state, IDB of current user
 
@@ -49,6 +52,7 @@ export const syncPublicStructure = async (): Promise<boolean> => {
           keyPath: TAGID_TO_TAGNAME_MAP,
           data: serverData[TAGID_TO_TAGNAME_MAP]
         });
+        store.dispatch(SyncNameMap(serverData[TAGID_TO_TAGNAME_MAP]));
       }
       // execute sync
       const success = await performPublicSync(

@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import { AppState } from "./modules/indexReducer";
 import SignInWithGoogle from "./pages/Login";
 
-import { throwError } from "./modules/error/errorActions";
+import { throwErrorCreator } from "./modules/error/errorActionCreator";
 import ErrorBoundary from "./components/ErrorHandlers/ErrorBoundary";
 
 import { setupPushNotifications } from "./utils/setupPushNotifications";
@@ -15,10 +15,11 @@ import { syncPrivateStructureToState } from "./utils/syncPrivateStructureToState
 
 import SearchBar from "./components/SearchBar/search";
 import { handleCachingStructure } from "./APIs/caching/databaseStructure/handleCaching";
+import { IErrorPopup } from "./modules/error/errorTypes";
 
 interface IAppProps {
   uid: string | null;
-  throwError: any;
+  throwError(errorObj: IErrorPopup): void;
 }
 
 const App: React.FC<IAppProps> = (props: IAppProps) => {
@@ -55,7 +56,7 @@ const App: React.FC<IAppProps> = (props: IAppProps) => {
     <ErrorBoundary>
       <BrowserRouter>
         <React.Fragment>
-          <Route path="/" component={() => <div>Hello React</div>} />
+          <Route path="/" component={SearchBar} />
           <Route path="/" component={ErrorPopup} />
         </React.Fragment>
       </BrowserRouter>
@@ -69,7 +70,13 @@ const mapstate = (state: AppState) => {
   };
 };
 
+const mapdispatch = (dispatch: any) => {
+  return {
+    throwError: (errorObj: IErrorPopup) => dispatch(throwErrorCreator(errorObj))
+  };
+};
+
 export default connect(
   mapstate,
-  { throwError }
+  mapdispatch
 )(App);

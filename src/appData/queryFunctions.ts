@@ -1,21 +1,21 @@
 export const queryFunctionsFuse = [
   {
-    tag: "in"
+    tagName: "in"
   },
   {
-    tag: "with"
+    tagName: "with"
   },
   {
-    tag: "in team"
+    tagName: "in team"
   },
   {
-    tag: "and"
+    tagName: "and"
   },
   {
-    tag: "without"
+    tagName: "without"
   },
   {
-    tag: "except"
+    tagName: "except"
   }
 ];
 
@@ -34,12 +34,12 @@ export const queryFunctions = [
 
 export const queryFunctionsStart = [
   {
-    tag: "get"
+    tagName: "get"
   },
   {
-    tag: "add"
+    tagName: "add"
   },
   {
-    tag: "create"
+    tagName: "create"
   }
 ];

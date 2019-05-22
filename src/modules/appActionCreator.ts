@@ -3,7 +3,10 @@ import {
   ISyncPrivateStructureAction,
   SYNC_PRIVATE_STRUCTURE,
   ISyncActiveCompanyAction,
-  SYNC_ACTIVE_COMPANY
+  SYNC_ACTIVE_COMPANY,
+  ITagidToTagnameMap,
+  ISyncNameMapAction,
+  SYNC_NAMEMAP
 } from "./appTypes";
 
 export const SyncPrivateStructureMap = (
@@ -21,5 +24,14 @@ export const SyncActiveCompany = (
   return {
     type: SYNC_ACTIVE_COMPANY,
     payload: activeCompany
+  };
+};
+
+export const SyncNameMap = (
+  nameMap: ITagidToTagnameMap
+): ISyncNameMapAction => {
+  return {
+    type: SYNC_NAMEMAP,
+    payload: nameMap
   };
 };

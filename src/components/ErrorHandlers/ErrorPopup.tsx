@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { connect } from "react-redux";
 import styled, { keyframes } from "styled-components";
 
-import { resolveError } from "../../modules/error/errorActions";
+import { resolveErrorCreator } from "../../modules/error/errorActionCreator";
 
 import { AppState } from "../../modules/indexReducer";
 import { IErrorState } from "../../modules/error/errorTypes";
@@ -106,7 +106,13 @@ const mapstate = (state: AppState) => {
   };
 };
 
+const mapdispatch = (dispatch: any) => {
+  return {
+    resolveError: () => dispatch(resolveErrorCreator())
+  };
+};
+
 export default connect(
   mapstate,
-  { resolveError }
+  mapdispatch
 )(ErrorPopupHandler);

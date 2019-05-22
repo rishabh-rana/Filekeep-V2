@@ -3,6 +3,7 @@ export const PRIVATE_STRUCTURE = "private_structure";
 export const PUBLIC_STRUCTURE = "public_structure";
 export const TAGID_TO_TAGNAME_MAP = "tagidToTagnameMap";
 export const SYNC_ACTIVE_COMPANY = "sync_active_company";
+export const SYNC_NAMEMAP = "sync_nameMap";
 
 export interface ISyncActiveCompanyAction {
   type: typeof SYNC_ACTIVE_COMPANY;
@@ -42,4 +43,10 @@ export type PrivateStructureMap = Map<string, IPrivateStructureObject>;
 export interface IApplicationState {
   activeCompany: string | null;
   private_structure: PrivateStructureMap | null;
+  tagIdToNameMap: ITagidToTagnameMap | null;
+}
+
+export interface ISyncNameMapAction {
+  type: typeof SYNC_NAMEMAP;
+  payload: ITagidToTagnameMap;
 }

@@ -1,7 +1,8 @@
 import React from "react";
 import { connect } from "react-redux";
-import { signInWithGoogle } from "../modules/auth/googleAuthActions";
 import styled from "styled-components";
+import { Dispatch } from "redux";
+import { signInWithGoogle } from "./Login/signInWithGoogle";
 
 const Container = styled.div`
   padding: 20px;
@@ -26,19 +27,25 @@ const SmallInfoText = styled.div`
   text-align: center;
 `;
 interface IProps {
-  signInWithGoogle: any;
+  signIn(): void;
 }
 
 const SignInWithGoogle: React.FC<IProps> = (props: IProps) => {
   return (
     <Container>
-      <SignInButton onClick={props.signInWithGoogle} />
+      <SignInButton onClick={props.signIn} />
       <SmallInfoText>More options coming soon...</SmallInfoText>
     </Container>
   );
 };
 
+const mapdispatch = (dispatch: Dispatch) => {
+  return {
+    signIn: () => signInWithGoogle(dispatch)
+  };
+};
+
 export default connect(
   null,
-  { signInWithGoogle }
+  mapdispatch
 )(SignInWithGoogle);
