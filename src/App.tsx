@@ -11,8 +11,7 @@ import { verifyLogin, LogoutAfterTimeout } from "./utils/verifyLogin";
 import { BrowserRouter, Route } from "react-router-dom";
 import ErrorPopup from "./components/ErrorHandlers/ErrorPopup";
 
-import { updateAndCacheStructure } from "./APIs/caching/databaseStructure/syncPublicStructure";
-import { syncFuseIndicesFromDB } from "./utils/syncFuseIndices";
+import { syncPrivateStructureToState } from "./utils/syncPrivateStructureToState";
 
 import SearchBar from "./components/SearchBar/search";
 import { handleCachingStructure } from "./APIs/caching/databaseStructure/handleCaching";
@@ -24,7 +23,7 @@ interface IAppProps {
 
 const App: React.FC<IAppProps> = (props: IAppProps) => {
   const setupFuseIndices = async () => {
-    await syncFuseIndicesFromDB();
+    await syncPrivateStructureToState();
     handleCachingStructure();
   };
 

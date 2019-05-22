@@ -13,7 +13,6 @@ import {
   IPrivateStructureIndexedDBObject,
   TAGID_TO_TAGNAME_MAP,
   ITagidToTagnameMap,
-  IPrivateStructureObject,
   IRawPrivateStructureObject,
   PrivateStructureMap,
   PUBLIC_STRUCTURE,
