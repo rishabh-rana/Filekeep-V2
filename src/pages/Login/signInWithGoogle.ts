@@ -10,10 +10,10 @@ import { SyncUsers } from "../../modules/auth/authActionCreator";
 import mixpanel from "../../config/mixpanel";
 import { TRACK_SIGNIN } from "../../config/mixpanelConstants";
 import { throwErrorCreator } from "../../modules/error/errorActionCreator";
+import { createNewCompany } from "../../utils/createNewCompany";
 
 export const signInWithGoogle = async (dispatch: Dispatch) => {
   await auth.setPersistence(per);
-  console.log(Date.now());
   var result = await auth.signInWithPopup(provider);
 
   if (
@@ -63,22 +63,15 @@ export const signInWithGoogle = async (dispatch: Dispatch) => {
       firestore
         .collection(USER_COLLECTION)
         .doc(result.user.uid)
-        .set({
-          shared_projects: {
-            Filekeep_Introduction: true
-          }
-        });
-
-      firestore
-        .collection(USER_COLLECTION)
-        .doc(result.user.uid)
         .collection(INFORMATION_SUBCOLLECTION)
         .doc(PUBLIC_INFORMATION)
         .set({
-          displayName: result.user.displayName
+          displayName: result.user.displayName,
+          email: result.user.email,
+          photo: result.user.photoURL
         });
     } catch (error) {
-      // DISPATCH OFFLINE SYNC ACTION
+      // err
     }
 
     dispatch(
@@ -87,6 +80,8 @@ export const signInWithGoogle = async (dispatch: Dispatch) => {
         displayName: result.user.displayName || "User"
       })
     );
+    // execute the actual sugnup logic after dispatch, to update app state instantaneously
+    createNewCompany({ uid: result.user.uid });
   } else {
     // dispatch error handler
     dispatch(

@@ -6,7 +6,9 @@ import {
   SYNC_ACTIVE_COMPANY,
   ITagidToTagnameMap,
   ISyncNameMapAction,
-  SYNC_NAMEMAP
+  SYNC_NAMEMAP,
+  ISyncSetupCompanyAction,
+  SYNC_SETUP_COMPANY
 } from "./appTypes";
 
 export const SyncPrivateStructureMap = (
@@ -33,5 +35,14 @@ export const SyncNameMap = (
   return {
     type: SYNC_NAMEMAP,
     payload: nameMap
+  };
+};
+
+export const SyncSetupCompany = (
+  shouldSetup: boolean
+): ISyncSetupCompanyAction => {
+  return {
+    type: SYNC_SETUP_COMPANY,
+    payload: shouldSetup
   };
 };

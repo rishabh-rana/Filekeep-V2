@@ -1,19 +1,12 @@
-import { firestore } from "../../../config/firebase";
-import {
-  COMPANIES_COLLECTION,
-  USERS_SUBCOLLECTION
-} from "../../../config/firestoreConstants";
+import { firestore, functions } from "../../../config/firebase";
+import { COMPANIES_COLLECTION } from "../../../config/firestoreConstants";
 
 import {
   PUBLIC_STRUCTURE,
   TAGID_TO_TAGNAME_MAP,
   IRawPrivateStructureObject,
   ITagidToTagnameMap,
-  IPrivateStructureIndexedDBObject,
-  PrivateStructureMap,
-  IDeletionMap,
-  PRIVATE_STRUCTURE,
-  IPrivateStructureObject
+  IPrivateStructureIndexedDBObject
 } from "../../../modules/appTypes";
 import { returnDiffs } from "./helperFunctions";
 import { getVariableServerPaths } from "../../../utils/getVariableServerPaths";
@@ -22,10 +15,7 @@ import {
   addDatabaseStructureData
 } from "../../indexedDb/databaseHeirarchyStructure";
 import store from "../../../store";
-import {
-  SyncPrivateStructureMap,
-  SyncNameMap
-} from "../../../modules/appActionCreator";
+import { SyncNameMap } from "../../../modules/appActionCreator";
 
 // sync public asets from server to the private structure on the server, state, IDB of current user
 
@@ -80,120 +70,32 @@ const performPublicSync = async (
   );
   // there were changes, this !== false, in this case, sync public structure in IDB
   if (copyOfServerData) {
-    addDatabaseStructureData({
-      keyPath: PUBLIC_STRUCTURE,
-      data: copyOfServerData
-    });
-  }
+    const { activeCompany } = await getVariableServerPaths();
 
-  // now we need to union this PublicMap with our private structure, if there were any changes detected to the public structure
-  if (copyOfServerData) {
-    // get private structure from state, as the syncPrivateStructure() executes before this function call, we get an updated private structure from this call
-    const privateStructure = getPrivateStructureFromState();
-
-    if (!privateStructure) {
-      // serious error, as there must be a private structure always
-      return true;
-    }
-
-    // this will denote the final union map
-    let finalStructure: PrivateStructureMap = new Map();
-
-    const privateStructureIterator = privateStructure.entries();
-    let currentPrivateObject = privateStructureIterator.next();
-    // this code makes copy of privateStructure as the Map from redux store is immutable
-    while (!currentPrivateObject.done) {
-      // handle deletion
-      if (
-        deletionMap &&
-        deletionMap[currentPrivateObject.value[0]] &&
-        deletionMap[currentPrivateObject.value[0]].mainTag
-      ) {
-        // do nothing, as in do not copy this tag as it has been deleted
-      } else {
-        const obj = currentPrivateObject.value[1];
-        finalStructure.set(obj.tag, {
-          tag: obj.tag,
-          tagName: obj.tagName,
-          parents: [...obj.parents]
+    if (!activeCompany) {
+      return false;
+    } else {
+      try {
+        const handlePublicShare = await functions.httpsCallable(
+          "handlePublicShare"
+        )({
+          deletionMap,
+          activeCompany
         });
-      }
-
-      currentPrivateObject = privateStructureIterator.next();
-    }
-    // copies the priateStructure to finalStructure variable, that is made a mutable copy
-
-    // take union
-    const iterator = copyOfServerData.values();
-    let currentIterator = iterator.next();
-
-    while (!currentIterator.done) {
-      const { tag } = currentIterator.value;
-      if (finalStructure.has(tag)) {
-        // we need to take union now
-        const serverParents = currentIterator.value.parents;
-        //@ts-ignore
-        const localParents = (finalStructure.get(tag)
-          .parents as unknown) as string[];
-        const helper: any = {};
-        [...serverParents, ...localParents].forEach(tag => {
-          helper[tag] = true;
-        });
-
-        if (deletionMap[tag] && deletionMap[tag].parents) {
-          //@ts-ignore
-          deletionMap[tag].parents.forEach(deleteTag => {
-            delete helper[deleteTag];
+        // successfully synced to privateStructure of user
+        if (handlePublicShare.data.done) {
+          // add the public structure to the IDB
+          addDatabaseStructureData({
+            keyPath: PUBLIC_STRUCTURE,
+            data: copyOfServerData
           });
         }
-
-        finalStructure.set(tag, {
-          tag,
-          tagName: currentIterator.value.tagName,
-          parents: Object.keys(helper)
-        });
-      } else {
-        // this is a new entry, add directly
-        finalStructure.set(tag, currentIterator.value);
+      } catch (err) {
+        // do nothing
       }
-      currentIterator = iterator.next();
     }
-
-    // now finalStructure represents union of Public Structure and Private Structure, both synced realtime to server!
-    // set this to state, and cache in IDB
-    store.dispatch(SyncPrivateStructureMap(finalStructure));
-    addDatabaseStructureData({
-      keyPath: PRIVATE_STRUCTURE,
-      data: finalStructure
-    });
-    // syncWithFireStore(finalStructure);
   }
+
   // exit call
   return true;
-};
-
-const getPrivateStructureFromState = (): PrivateStructureMap | null => {
-  return store.getState().app.private_structure;
-};
-
-const syncWithFireStore = async (
-  finalStructure: PrivateStructureMap
-): Promise<void> => {
-  const { activeCompany, uid } = await getVariableServerPaths();
-  if (activeCompany && uid) {
-    //  sync to server
-    const arrayForServer: IRawPrivateStructureObject[] = [];
-    const iterator = finalStructure.values();
-    let currentIterator = iterator.next();
-
-    while (!currentIterator.done) {
-      arrayForServer.push({
-        tag: currentIterator.value.tag,
-        parents: currentIterator.value.parents
-      });
-      currentIterator = iterator.next();
-    }
-
-    // now send arrayForServer to the user's doc in the company using cloud function endpoint
-  }
 };

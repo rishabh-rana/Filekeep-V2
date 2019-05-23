@@ -1,5 +1,12 @@
-import { IPrivateStructureIndexedDBObject } from "../../modules/appTypes";
+import {
+  IPrivateStructureIndexedDBObject,
+  PUBLIC_STRUCTURE
+} from "../../modules/appTypes";
 import { getVariableServerPaths } from "../../utils/getVariableServerPaths";
+import { firestore } from "../../config/firebase";
+import { COMPANIES_COLLECTION } from "../../config/firestoreConstants";
+import store from "../../store";
+import { SyncSetupCompany } from "../../modules/appActionCreator";
 
 const databaseNameConstant = "appBootData";
 const databaseNumber = 1;
@@ -64,6 +71,8 @@ export const getDatabaseStructure = async (
         if (req.result) {
           resolve(req.result);
         } else {
+          //@ts-ignore
+          verifyCompanySetup(activeCompany);
           resolve(false);
         }
       };
@@ -131,4 +140,16 @@ export const addDatabaseStructureData = (
   });
 
   return promise;
+};
+
+const verifyCompanySetup = async (activeCompany: string) => {
+  const doc = await firestore
+    .collection(COMPANIES_COLLECTION)
+    .doc(activeCompany)
+    .get();
+  const data = doc.data();
+  if (!data || !data[PUBLIC_STRUCTURE] || data[PUBLIC_STRUCTURE].length === 0) {
+    console.log("SETUP COMPANY");
+    store.dispatch(SyncSetupCompany(true));
+  }
 };

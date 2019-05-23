@@ -17,35 +17,37 @@ const requestPermissionForPush = async (uid: string) => {
     .get();
 
   const data = doc.data();
-  if (data) {
-    // check if permission is granted
-    messaging
-      .requestPermission()
-      .then(function() {
-        messaging
-          .getToken()
-          .then(function(currentToken) {
-            if (currentToken && currentToken !== data.gcm_token) {
-              firestore
-                .collection(USER_COLLECTION)
-                .doc(uid)
-                .collection(INFORMATION_SUBCOLLECTION)
-                .doc(PRIVATE_INFORMATION)
-                .update({
+
+  // check if permission is granted
+  messaging
+    .requestPermission()
+    .then(function() {
+      messaging
+        .getToken()
+        .then(function(currentToken) {
+          if (currentToken && (!data || currentToken !== data.gcm_token)) {
+            firestore
+              .collection(USER_COLLECTION)
+              .doc(uid)
+              .collection(INFORMATION_SUBCOLLECTION)
+              .doc(PRIVATE_INFORMATION)
+              .set(
+                {
                   gcm_token: currentToken
-                });
-            } else {
-              // do nothing
-            }
-          })
-          .catch(function(err) {
-            console.log("An error occurred while retrieving token. ", err);
-          });
-      })
-      .catch(function(err) {
-        console.log("Unable to get permission to notify.", err);
-      });
-  }
+                },
+                { merge: true }
+              );
+          } else {
+            // do nothing
+          }
+        })
+        .catch(function(err) {
+          console.log("An error occurred while retrieving token. ", err);
+        });
+    })
+    .catch(function(err) {
+      console.log("Unable to get permission to notify.", err);
+    });
 };
 
 export const setupPushNotifications = (uid: string) => {

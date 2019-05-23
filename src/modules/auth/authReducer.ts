@@ -3,7 +3,11 @@ import { IAuthState, ISyncUsersAction, SYNC_USERS } from "./authTypes";
 const initialState: IAuthState = {
   uid:
     localStorage.getItem("uid") === null ? null : localStorage.getItem("uid"),
-  displayName: "User"
+  //@ts-ignore
+  displayName:
+    localStorage.getItem("displayName") === null
+      ? "User"
+      : localStorage.getItem("displayName")
 };
 
 const reducer = (

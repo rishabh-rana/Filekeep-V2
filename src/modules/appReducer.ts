@@ -5,13 +5,16 @@ import {
   SYNC_ACTIVE_COMPANY,
   ISyncActiveCompanyAction,
   ISyncNameMapAction,
-  SYNC_NAMEMAP
+  SYNC_NAMEMAP,
+  ISyncSetupCompanyAction,
+  SYNC_SETUP_COMPANY
 } from "./appTypes";
 
 const initialState: IApplicationState = {
   activeCompany: localStorage.getItem("activeCompany"),
   private_structure: null,
-  tagIdToNameMap: null
+  tagIdToNameMap: null,
+  setupCompany: false
 };
 
 const reducer = (
@@ -20,6 +23,7 @@ const reducer = (
     | ISyncPrivateStructureAction
     | ISyncActiveCompanyAction
     | ISyncNameMapAction
+    | ISyncSetupCompanyAction
 ): IApplicationState => {
   switch (action.type) {
     case SYNC_PRIVATE_STRUCTURE:
@@ -28,6 +32,8 @@ const reducer = (
       return { ...state, activeCompany: action.payload };
     case SYNC_NAMEMAP:
       return { ...state, tagIdToNameMap: action.payload };
+    case SYNC_SETUP_COMPANY:
+      return { ...state, setupCompany: action.payload };
   }
 
   return state;

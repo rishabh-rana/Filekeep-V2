@@ -8,14 +8,14 @@ import ErrorBoundary from "./components/ErrorHandlers/ErrorBoundary";
 
 import { setupPushNotifications } from "./utils/setupPushNotifications";
 import { verifyLogin, LogoutAfterTimeout } from "./utils/verifyLogin";
-import { BrowserRouter, Route } from "react-router-dom";
-import ErrorPopup from "./components/ErrorHandlers/ErrorPopup";
+import { BrowserRouter, Route, Switch, Redirect } from "react-router-dom";
 
 import { syncPrivateStructureToState } from "./utils/syncPrivateStructureToState";
 
-import SearchBar from "./components/SearchBar/search";
 import { handleCachingStructure } from "./APIs/caching/databaseStructure/handleCaching";
 import { IErrorPopup } from "./modules/error/errorTypes";
+import SetupFilekeep from "./pages/SetupFilekeep";
+import AppMainRouter from "./AppMainRouter";
 
 interface IAppProps {
   uid: string | null;
@@ -23,7 +23,7 @@ interface IAppProps {
 }
 
 const App: React.FC<IAppProps> = (props: IAppProps) => {
-  const setupFuseIndices = async () => {
+  const syncCachePrivateStructure = async () => {
     await syncPrivateStructureToState();
     handleCachingStructure();
   };
@@ -35,8 +35,9 @@ const App: React.FC<IAppProps> = (props: IAppProps) => {
       // logout if session has timed out or firebase has logged you out
       LogoutAfterTimeout();
       // sync, update and cache the taglist
-      setupFuseIndices();
+      syncCachePrivateStructure();
     }
+    //@ts-ignore
   }, []);
 
   // HANDLE LOGIN VERIFICATION
@@ -56,8 +57,10 @@ const App: React.FC<IAppProps> = (props: IAppProps) => {
     <ErrorBoundary>
       <BrowserRouter>
         <React.Fragment>
-          <Route path="/" component={SearchBar} />
-          <Route path="/" component={ErrorPopup} />
+          <Switch>
+            <Route path="/setup" component={SetupFilekeep} />
+            <Route path="/" component={AppMainRouter} />
+          </Switch>
         </React.Fragment>
       </BrowserRouter>
     </ErrorBoundary>
