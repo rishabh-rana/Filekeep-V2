@@ -47,6 +47,7 @@ export const returnDiffs = (
   copyOfServerData: PrivateStructureMap | false;
   deletionMap: IDeletionMap;
 } => {
+  console.log(serverData);
   const serverDataMap: PrivateStructureMap = new Map();
   // this is the difference map to be returned
   const deletionMap: IDeletionMap = {};
@@ -65,7 +66,6 @@ export const returnDiffs = (
       tagName: tagIdToTagNameMap[tag]
     });
   });
-  console.log("MAPPING OP", Date.now() - time);
 
   // return the new map if no local data was there
   if (!localDataMap) {
@@ -110,7 +110,6 @@ export const returnDiffs = (
     }
     currentIterator = iterator.next();
   }
-  console.log("Dele", Date.now() - time);
 
   // return diffs
   return {

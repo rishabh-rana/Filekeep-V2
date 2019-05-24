@@ -47,8 +47,6 @@ export const signInWithGoogle = async (dispatch: Dispatch) => {
 
     const activeCompany = data.active_project;
 
-    dispatch(SyncActiveCompany(activeCompany));
-
     // dispatch the signin Details
     dispatch(
       SyncUsers({
@@ -56,6 +54,8 @@ export const signInWithGoogle = async (dispatch: Dispatch) => {
         displayName: result.user.displayName || "User"
       })
     );
+    // dispatch active company later to fire onsignin handler on the app
+    dispatch(SyncActiveCompany(activeCompany));
   } else if (
     result &&
     result.user &&

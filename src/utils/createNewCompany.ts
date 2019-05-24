@@ -6,10 +6,7 @@ import {
 } from "../config/firestoreConstants";
 import { getVariableServerPaths } from "./getVariableServerPaths";
 import store from "../store";
-import {
-  SyncActiveCompany,
-  SyncSetupCompany
-} from "../modules/appActionCreator";
+import { SyncSetupCompany } from "../modules/appActionCreator";
 
 export const createNewCompany = async (uidOpt?: { uid: string }) => {
   const handleSignup = functions.httpsCallable("handleSignup");
@@ -28,8 +25,9 @@ export const createNewCompany = async (uidOpt?: { uid: string }) => {
         last_active: Date.now()
       });
     localStorage.setItem("activeCompany", data.newCompanyId);
-    store.dispatch(SyncActiveCompany(data.newCompanyId));
-    console.log("CREATED NEW CONPANY");
     store.dispatch(SyncSetupCompany(true));
+    // we will update the active company when setup is complete
+    // store.dispatch(SyncActiveCompany(data.newCompanyId));
+    console.log("CREATED NEW CONPANY");
   }
 };

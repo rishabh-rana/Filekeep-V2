@@ -2,6 +2,7 @@ import { syncPrivateStructure } from "./syncPrivateStructure";
 import { syncPublicStructure } from "./syncPublicStructure";
 
 export const handleCachingStructure = async () => {
-  await syncPrivateStructure();
-  syncPublicStructure();
+  const unsubscribePrivate = await syncPrivateStructure();
+  const unsubscribePublic = await syncPublicStructure();
+  return [unsubscribePrivate, unsubscribePublic];
 };

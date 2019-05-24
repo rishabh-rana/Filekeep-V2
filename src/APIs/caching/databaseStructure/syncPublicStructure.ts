@@ -19,39 +19,49 @@ import { SyncNameMap } from "../../../modules/appActionCreator";
 
 // sync public asets from server to the private structure on the server, state, IDB of current user
 
-export const syncPublicStructure = async (): Promise<boolean> => {
+export const syncPublicStructure = async (): Promise<() => void> => {
+  let unsubscribe: () => void;
   const { activeCompany } = await getVariableServerPaths();
 
   // no active company
-  if (!activeCompany) return false;
+  if (!activeCompany) return () => {};
 
-  firestore
-    .collection(COMPANIES_COLLECTION)
-    .doc(activeCompany)
-    .onSnapshot(async doc => {
-      const serverData = doc.data();
+  const promise: Promise<() => void> = new Promise((resolve, reject) => {
+    let resolveOnce = (unsubs: () => void) => {
+      resolveOnce = () => {};
+      resolve(unsubs);
+    };
 
-      if (!serverData) {
-        return;
-      }
-
-      // sync nameMap
-      if (serverData[TAGID_TO_TAGNAME_MAP]) {
-        // sync name map
-        addDatabaseStructureData({
-          keyPath: TAGID_TO_TAGNAME_MAP,
-          data: serverData[TAGID_TO_TAGNAME_MAP]
-        });
-        store.dispatch(SyncNameMap(serverData[TAGID_TO_TAGNAME_MAP]));
-      }
-      // execute sync
-      const success = await performPublicSync(
-        serverData[PUBLIC_STRUCTURE],
-        serverData[TAGID_TO_TAGNAME_MAP]
-      );
-    });
-
-  return true;
+    unsubscribe = firestore
+      .collection(COMPANIES_COLLECTION)
+      .doc(activeCompany)
+      .onSnapshot(async doc => {
+        const serverData = doc.data();
+        console.log("SNAPSHOT RECEIVED FROM PUBLIC");
+        if (!serverData) {
+          resolveOnce(() => {});
+          return;
+        }
+        // sync nameMap
+        if (serverData[TAGID_TO_TAGNAME_MAP]) {
+          // sync name map
+          addDatabaseStructureData({
+            keyPath: TAGID_TO_TAGNAME_MAP,
+            data: serverData[TAGID_TO_TAGNAME_MAP]
+          });
+          store.dispatch(SyncNameMap(serverData[TAGID_TO_TAGNAME_MAP]));
+        }
+        console.log("trying sync public", serverData);
+        // execute sync
+        const success = await performPublicSync(
+          serverData[PUBLIC_STRUCTURE],
+          serverData[TAGID_TO_TAGNAME_MAP]
+        );
+        resolveOnce(() => {});
+      });
+  });
+  //@ts-ignore
+  return unsubscribe;
 };
 
 const performPublicSync = async (
@@ -68,6 +78,7 @@ const performPublicSync = async (
     storedPublicStructure ? storedPublicStructure.data : false,
     tagIdToTagNameMap
   );
+  console.log(storedPublicStructure);
 
   // there were changes, this !== false, in this case, sync public structure in IDB
   if (copyOfServerData) {
@@ -77,7 +88,6 @@ const performPublicSync = async (
       return false;
     } else {
       try {
-        console.log("TRYING SERVER SYNC OP", copyOfServerData);
         const handlePublicShare = await functions.httpsCallable(
           "handlePublicShare"
         )({
@@ -98,7 +108,7 @@ const performPublicSync = async (
       }
     }
   }
-
+  console.log("finished sync public");
   // exit call
   return true;
 };

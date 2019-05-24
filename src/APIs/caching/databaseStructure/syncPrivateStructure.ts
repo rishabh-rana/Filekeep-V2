@@ -21,33 +21,34 @@ import { SyncPrivateStructureMap } from "../../../modules/appActionCreator";
 
 // this method syncs in realtime, the private assets on this company container shared with current user
 
-export const syncPrivateStructure = (): Promise<true> => {
+export const syncPrivateStructure = (): Promise<() => void> => {
   // return a promise to invoke next caching methof after this has completed
-  const promise: Promise<true> = new Promise(async (resolve, reject) => {
+  const promise: Promise<() => void> = new Promise(async (resolve, reject) => {
     // this method will resolve only once, not on every realtime update
-    let resolveOnce = () => {
+    let resolveOnce = (unsub: () => void) => {
       resolveOnce = () => {};
-      resolve(true);
+      resolve(unsub);
     };
     // get activeCompany and uid from redux
     const { activeCompany, uid } = await getVariableServerPaths();
     // if no data, it may be an error or the user may be offline and have deleted local storage
     // we will still sync data from indexedDb to state from another method
     if (!activeCompany || !uid) {
-      resolveOnce();
+      resolveOnce(() => {});
       return;
     }
     // set up realtime listener
-    firestore
+    const unsubscribe = firestore
       .collection(COMPANIES_COLLECTION)
       .doc(activeCompany)
       .collection(USERS_SUBCOLLECTION)
       .doc(uid)
       .onSnapshot(async doc => {
+        console.log("SNAP SHOT FROM PVT");
         const serverData = doc.data();
 
         if (!serverData) {
-          resolveOnce();
+          resolveOnce(unsubscribe);
           return;
         }
         // if no private_strucutre field exist on the data from server
@@ -64,16 +65,15 @@ export const syncPrivateStructure = (): Promise<true> => {
               console.log(err);
             });
 
-          resolveOnce();
+          resolveOnce(unsubscribe);
           return;
         }
 
         // successfully got serverData
         const done = await syncOperation(serverData[PRIVATE_STRUCTURE]);
-        resolveOnce();
+        resolveOnce(unsubscribe);
       });
   });
-
   return promise;
 };
 

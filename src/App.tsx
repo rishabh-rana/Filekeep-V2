@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState, useReducer, useRef } from "react";
 import { connect } from "react-redux";
 import { AppState } from "./modules/indexReducer";
 import SignInWithGoogle from "./pages/Login";
@@ -6,43 +6,62 @@ import SignInWithGoogle from "./pages/Login";
 import { throwErrorCreator } from "./modules/error/errorActionCreator";
 import ErrorBoundary from "./components/ErrorHandlers/ErrorBoundary";
 
-import { setupPushNotifications } from "./utils/setupPushNotifications";
+// import { setupPushNotifications } from "./utils/setupPushNotifications";
 import { verifyLogin, LogoutAfterTimeout } from "./utils/verifyLogin";
-import { BrowserRouter, Route, Switch, Redirect } from "react-router-dom";
-
-import { syncPrivateStructureToState } from "./utils/syncPrivateStructureToState";
-
-import { handleCachingStructure } from "./APIs/caching/databaseStructure/handleCaching";
+import { BrowserRouter, Route, Switch } from "react-router-dom";
 import { IErrorPopup } from "./modules/error/errorTypes";
 import SetupFilekeep from "./pages/SetupFilekeep";
 import AppMainRouter from "./AppMainRouter";
-import { getData } from "./APIs/caching/test/generateData";
+import { bootAppLoadData } from "./utils/bootAppLoadData";
+import { handleCachingStructure } from "./APIs/caching/databaseStructure/handleCaching";
+import { updateActiveCompany } from "./utils/getVariableServerPaths";
+import { SyncActiveCompany } from "./modules/appActionCreator";
+// import { getData } from "./APIs/caching/test/generateData";
 
 interface IAppProps {
   uid: string | null;
   throwError(errorObj: IErrorPopup): void;
+  syncActiveCompany(activeCompany: string): void;
+  activeCompany: string | null;
 }
 
 const App: React.FC<IAppProps> = (props: IAppProps) => {
-  const syncCachePrivateStructure = async () => {
-    await syncPrivateStructureToState();
-    handleCachingStructure();
+  // setup push on app load, we will revamp this later
+  // useEffect(() => {
+  //   if (props.uid)
+  //   // setup push notifications
+  //   setupPushNotifications(props.uid);
+  // }, []);
+
+  // setup app state
+  const [unsubscribe, changeUnsubscribe] = useState<(() => void)[]>();
+
+  const setupAppForUser = async () => {
+    await bootAppLoadData();
+    const unsubscribeStructure = await handleCachingStructure();
+    // logout if session has timed out or firebase has logged you out
+    const unsubscribeAuth = LogoutAfterTimeout();
+    changeUnsubscribe([...unsubscribeStructure, unsubscribeAuth]);
   };
 
   useEffect(() => {
     if (props.uid) {
-      // push notifications
-      //@ts-ignore
-      setupPushNotifications(props.uid);
-      // logout if session has timed out or firebase has logged you out
-      LogoutAfterTimeout();
-      // sync, update and cache the taglist
-      syncCachePrivateStructure();
+      const activeCompany = localStorage.getItem("activeCompany");
+      if (activeCompany) {
+        props.syncActiveCompany(activeCompany);
+      } else {
+        updateActiveCompany(props.uid);
+      }
     }
-    //@ts-ignore
   }, []);
 
-  // HANDLE LOGIN VERIFICATION
+  useEffect(() => {
+    if (props.uid && props.activeCompany) {
+      if (unsubscribe) unsubscribe.forEach(unsub => unsub);
+      // sync, update and cache the taglist and setup auth check
+      setupAppForUser();
+    }
+  }, [props.activeCompany]);
 
   // verify login every time the uid in the redux store changes
   useEffect(() => {
@@ -52,9 +71,11 @@ const App: React.FC<IAppProps> = (props: IAppProps) => {
   // RENDER COMPONENTS BELOW
 
   // view authscreen if not signed In
-  if (!props.uid) return <SignInWithGoogle />;
-
-  return <div onClick={() => getData()}>TEST</div>;
+  if (!props.uid) {
+    if (unsubscribe) unsubscribe.forEach(unsub => unsub());
+    localStorage.removeItem("activeCompany");
+    return <SignInWithGoogle />;
+  }
 
   // app
   return (
@@ -73,13 +94,17 @@ const App: React.FC<IAppProps> = (props: IAppProps) => {
 
 const mapstate = (state: AppState) => {
   return {
-    uid: state.authenticationState.uid
+    uid: state.authenticationState.uid,
+    activeCompany: state.app.activeCompany
   };
 };
 
 const mapdispatch = (dispatch: any) => {
   return {
-    throwError: (errorObj: IErrorPopup) => dispatch(throwErrorCreator(errorObj))
+    throwError: (errorObj: IErrorPopup) =>
+      dispatch(throwErrorCreator(errorObj)),
+    syncActiveCompany: (activeCompany: string) =>
+      dispatch(SyncActiveCompany(activeCompany))
   };
 };
 

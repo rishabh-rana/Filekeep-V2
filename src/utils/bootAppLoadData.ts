@@ -11,7 +11,7 @@ import {
   SyncNameMap
 } from "../modules/appActionCreator";
 
-export const syncPrivateStructureToState = async (): Promise<boolean> => {
+export const bootAppLoadData = async (): Promise<boolean> => {
   const promise: Promise<boolean> = new Promise(async (resolve, reject) => {
     // get data from indexedDb
     let isSuccess = true;

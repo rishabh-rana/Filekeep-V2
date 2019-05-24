@@ -6,6 +6,7 @@ import { IAuthState } from "../modules/auth/authTypes";
 import { colors } from "../colors";
 
 import { createNewCompany } from "../utils/createNewCompany";
+import { signoutAndCleanup } from "../utils/signout";
 
 const Button = styled.button`
   border: none;
@@ -23,7 +24,7 @@ interface IProps {
 
 const Profile: React.FC<IProps> = (props: IProps) => {
   const signout = (): void => {
-    signout();
+    signoutAndCleanup();
   };
 
   return (

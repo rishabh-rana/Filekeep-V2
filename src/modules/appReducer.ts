@@ -11,7 +11,7 @@ import {
 } from "./appTypes";
 
 const initialState: IApplicationState = {
-  activeCompany: localStorage.getItem("activeCompany"),
+  activeCompany: null,
   private_structure: null,
   tagIdToNameMap: null,
   setupCompany: false
@@ -29,7 +29,10 @@ const reducer = (
     case SYNC_PRIVATE_STRUCTURE:
       return { ...state, private_structure: action.payload };
     case SYNC_ACTIVE_COMPANY:
-      return { ...state, activeCompany: action.payload };
+      return {
+        ...state,
+        activeCompany: action.payload === "" ? null : action.payload
+      };
     case SYNC_NAMEMAP:
       return { ...state, tagIdToNameMap: action.payload };
     case SYNC_SETUP_COMPANY:

@@ -17,9 +17,14 @@ export const getVariableServerPaths = async (): Promise<IReturns> => {
   let activeCompany = state.app.activeCompany;
 
   const uid = state.authenticationState.uid;
-
+  // if active company is not found in state
   if (!activeCompany && uid) {
-    activeCompany = await updateActiveCompany(uid);
+    // check localstorage
+    activeCompany = localStorage.getItem("activeCompany");
+    if (!activeCompany) {
+      // still not there, search server
+      activeCompany = await updateActiveCompany(uid);
+    }
   }
 
   return {
@@ -28,7 +33,9 @@ export const getVariableServerPaths = async (): Promise<IReturns> => {
   };
 };
 
-const updateActiveCompany = async (uid: string): Promise<string | null> => {
+export const updateActiveCompany = async (
+  uid: string
+): Promise<string | null> => {
   if (uid) {
     const userDoc = await firestore
       .collection(USER_COLLECTION)

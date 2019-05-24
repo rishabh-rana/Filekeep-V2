@@ -3,7 +3,7 @@ import store from "../store";
 import { SyncUsers } from "../modules/auth/authActionCreator";
 import { SyncActiveCompany } from "../modules/appActionCreator";
 
-export const signout = () => {
+export const signoutAndCleanup = () => {
   auth.signOut();
   store.dispatch(
     SyncUsers({
