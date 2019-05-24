@@ -11,6 +11,7 @@ import mixpanel from "../../config/mixpanel";
 import { TRACK_SIGNIN } from "../../config/mixpanelConstants";
 import { throwErrorCreator } from "../../modules/error/errorActionCreator";
 import { createNewCompany } from "../../utils/createNewCompany";
+import { SyncActiveCompany } from "../../modules/appActionCreator";
 
 export const signInWithGoogle = async (dispatch: Dispatch) => {
   await auth.setPersistence(per);
@@ -23,18 +24,31 @@ export const signInWithGoogle = async (dispatch: Dispatch) => {
     !result.additionalUserInfo.isNewUser
   ) {
     // old user detected
-    try {
-      firestore
-        .collection(USER_COLLECTION)
-        .doc(result.user.uid)
-        .collection(INFORMATION_SUBCOLLECTION)
-        .doc(PRIVATE_INFORMATION)
-        .update({
-          lastSignIn: Date.now()
-        });
-    } catch (error) {
-      // ignore adding lastSignIn time
+    firestore
+      .collection(USER_COLLECTION)
+      .doc(result.user.uid)
+      .collection(INFORMATION_SUBCOLLECTION)
+      .doc(PRIVATE_INFORMATION)
+      .update({
+        lastSignIn: Date.now()
+      });
+
+    const pDoc = await firestore
+      .collection(USER_COLLECTION)
+      .doc(result.user.uid)
+      .collection(INFORMATION_SUBCOLLECTION)
+      .doc(PRIVATE_INFORMATION)
+      .get();
+    const data = pDoc.data();
+
+    if (!data) {
+      return;
     }
+
+    const activeCompany = data.active_project;
+
+    dispatch(SyncActiveCompany(activeCompany));
+
     // dispatch the signin Details
     dispatch(
       SyncUsers({

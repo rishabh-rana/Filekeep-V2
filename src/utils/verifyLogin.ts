@@ -3,6 +3,7 @@ import { SyncUsers } from "../modules/auth/authActionCreator";
 import store from "../store";
 import mixpanel from "../config/mixpanel";
 import { FOUND_MESSING_WITH_CODE } from "../config/mixpanelConstants";
+import { signout } from "./signout";
 
 const getUidInState = (): string | null => {
   const state = store.getState();
@@ -12,8 +13,7 @@ const getUidInState = (): string | null => {
 export const LogoutAfterTimeout = () => {
   firebase.auth().onAuthStateChanged(user => {
     if (!user) {
-      store.dispatch(SyncUsers({ displayName: "User", uid: null }));
-      localStorage.removeItem("uid");
+      signout();
     }
   });
 };
@@ -47,13 +47,7 @@ export const verifyLogin = (): any => {
       if (uidInState || uidInLocalStorage) {
         console.log("Signed Out Session");
         mixpanel.track(FOUND_MESSING_WITH_CODE);
-        store.dispatch(
-          SyncUsers({
-            displayName: "User",
-            uid: null
-          })
-        );
-        localStorage.removeItem("uid");
+        signout();
       }
     }
 

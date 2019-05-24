@@ -13,9 +13,9 @@ const calculateParentsToBeDeleted = (
   //
   let parentDiffs: string[] | null = null;
   let isEqual = true;
-
+  console.log(arrayOne, arrayTwo);
   // if arrayone is smaller, then we need to return missing items
-  if (!isEqual && arrayOne.length < arrayTwo.length) {
+  if (arrayOne.length < arrayTwo.length) {
     const helper: string[] = [];
     // add missing items to helper array
     arrayTwo.forEach(item => {
@@ -25,12 +25,13 @@ const calculateParentsToBeDeleted = (
     });
     // set deletionDiff to helper array
     parentDiffs = helper;
-  } else {
+    console.log(helper);
     return {
       isEqual: false,
       parentDiffs
     };
   }
+
   // check equality of individual items
   arrayOne.forEach((data: string, index: number) => {
     if (data !== arrayTwo[index]) isEqual = false;
@@ -98,7 +99,9 @@ export const returnDiffs = (
         isBothDataEqual = false;
       }
       // tells a parent was modified
-      if (!isEqual) isBothDataEqual = false;
+      if (!isEqual) {
+        isBothDataEqual = false;
+      }
     } else {
       // add tag deletions to deletionMap
       deletionMap[tag] = {

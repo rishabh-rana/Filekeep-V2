@@ -3,12 +3,8 @@ import styled from "styled-components";
 import { connect } from "react-redux";
 import { AppState } from "../modules/indexReducer";
 import { IAuthState } from "../modules/auth/authTypes";
-import { auth } from "../config/firebase";
-import { Dispatch } from "redux";
-import { SyncUsers } from "../modules/auth/authActionCreator";
 import { colors } from "../colors";
 
-import firebase from "firebase";
 import { createNewCompany } from "../utils/createNewCompany";
 
 const Button = styled.button`
@@ -23,13 +19,11 @@ const Button = styled.button`
 
 interface IProps {
   profile: IAuthState;
-  signoutFromRedux(): void;
 }
 
 const Profile: React.FC<IProps> = (props: IProps) => {
   const signout = (): void => {
-    auth.signOut();
-    props.signoutFromRedux();
+    signout();
   };
 
   return (
@@ -47,19 +41,4 @@ const mapstate = (state: AppState) => {
   };
 };
 
-const mapdispatch = (dispatch: Dispatch) => {
-  return {
-    signoutFromRedux: () =>
-      dispatch(
-        SyncUsers({
-          uid: null,
-          displayName: "User"
-        })
-      )
-  };
-};
-
-export default connect(
-  mapstate,
-  mapdispatch
-)(Profile);
+export default connect(mapstate)(Profile);

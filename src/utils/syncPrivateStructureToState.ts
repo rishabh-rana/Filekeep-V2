@@ -22,6 +22,7 @@ export const syncPrivateStructureToState = async (): Promise<boolean> => {
 
     // if taglist existed, update state
     if (data !== false) {
+      console.log("FUCK UP HERE", data.data);
       store.dispatch(SyncPrivateStructureMap(data.data));
     } else {
       isSuccess = false;

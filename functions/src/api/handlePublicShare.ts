@@ -40,10 +40,15 @@ export const handlePublicShare = async (
           .catch(() => {
             throw new HttpsError("unavailable", "Try later");
           });
-        const data = doc.data();
-        if (data) {
+        const data1 = doc.data();
+        if (data1) {
+          console.log(
+            "isActiveCompanyCorrect",
+            //@ts-ignore
+            data1[SHARED_PROJECTS].hasOwnProperty(activeCompany)
+          );
           //@ts-ignore
-          resolve(data[SHARED_PROJECTS].hasOwnProperty(context.auth.uid));
+          resolve(data1[SHARED_PROJECTS].hasOwnProperty(activeCompany));
         } else {
           resolve(false);
         }
@@ -59,9 +64,10 @@ export const handlePublicShare = async (
         .catch(() => {
           throw new HttpsError("unavailable", "Try later");
         });
-      const data = doc.data();
-      if (data) {
-        resolve(data[PUBLIC_STRUCTURE] as IRawPrivateStructureObject[]);
+      const data2 = doc.data();
+      if (data2) {
+        console.log("public data got");
+        resolve(data2[PUBLIC_STRUCTURE] as IRawPrivateStructureObject[]);
       } else {
         resolve(false);
       }
@@ -79,10 +85,11 @@ export const handlePublicShare = async (
         .catch(() => {
           throw new HttpsError("unavailable", "Try later");
         });
-      const data = doc.data();
-      if (data) {
+      const data3 = doc.data();
+      if (data3) {
         //@ts-ignore
-        resolve(data[PRIVATE_STRUCTURE] as IRawPrivateStructureObject[]);
+        console.log("private data got");
+        resolve(data3[PRIVATE_STRUCTURE] as IRawPrivateStructureObject[]);
       } else {
         resolve(false);
       }
@@ -93,6 +100,8 @@ export const handlePublicShare = async (
       publicStructurePromise,
       privateStructurePromise
     ]);
+
+    console.log("values got");
 
     if (!Values[0]) {
       throw new HttpsError(
@@ -120,6 +129,8 @@ export const handlePublicShare = async (
       }
     });
 
+    console.log("built privateMap");
+
     publicStructure.forEach(obj => {
       const { tag } = obj;
       if (privateStructureMap.hasOwnProperty(tag)) {
@@ -127,8 +138,8 @@ export const handlePublicShare = async (
         const publicParents = obj.parents;
         const privateParents = privateStructureMap[tag].parents;
         const helper: any = {};
-        [...publicParents, ...privateParents].forEach(tag => {
-          helper[tag] = true;
+        [...publicParents, ...privateParents].forEach(tag1 => {
+          helper[tag1] = true;
         });
 
         if (deletionMap[tag] && deletionMap[tag].parents) {
@@ -148,12 +159,15 @@ export const handlePublicShare = async (
       }
     });
 
+    console.log("took unions");
+
     const finalArray: IRawPrivateStructureObject[] = [];
 
     Object.keys(privateStructureMap).forEach(tag => {
       finalArray.push(privateStructureMap[tag]);
     });
 
+    console.log("tried updating private structure");
     db.collection(COMPANIES_COLLECTION)
       .doc(activeCompany)
       .collection(USERS_SUBCOLLECTION)

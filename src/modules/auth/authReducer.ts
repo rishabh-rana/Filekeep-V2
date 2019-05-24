@@ -27,6 +27,7 @@ const reducer = (
       } else {
         localStorage.removeItem("uid");
         localStorage.removeItem("displayName");
+        localStorage.removeItem("activeCompany");
         return { ...state, uid: null, displayName: "User" };
       }
   }

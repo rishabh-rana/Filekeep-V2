@@ -14,7 +14,7 @@ exports.handleSignup = functions.https.onCall((data, context) => {
 
 exports.handlePublicShare = functions.https.onCall((data, context) => {
   return handlePublicShare(data, context).catch(() => {
-    throw new HttpsError("unavailable", "Something went wrong");
+    throw new HttpsError("unauthenticated", "Something went wrong");
   });
 });
 

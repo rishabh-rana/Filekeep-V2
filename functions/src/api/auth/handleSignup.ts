@@ -71,13 +71,6 @@ export const handleSignup = async (
         throw new HttpsError("unavailable", "Cannot update user schema");
       });
 
-    db.collection(COMPANIES_COLLECTION)
-      .doc(ref.id)
-      .set({
-        created: Date.now(),
-        edit_rights: [context.auth.uid]
-      });
-
     return {
       newCompanyId: ref.id
     };

@@ -68,6 +68,7 @@ const performPublicSync = async (
     storedPublicStructure ? storedPublicStructure.data : false,
     tagIdToTagNameMap
   );
+
   // there were changes, this !== false, in this case, sync public structure in IDB
   if (copyOfServerData) {
     const { activeCompany } = await getVariableServerPaths();
@@ -76,6 +77,7 @@ const performPublicSync = async (
       return false;
     } else {
       try {
+        console.log("TRYING SERVER SYNC OP", copyOfServerData);
         const handlePublicShare = await functions.httpsCallable(
           "handlePublicShare"
         )({
@@ -92,6 +94,7 @@ const performPublicSync = async (
         }
       } catch (err) {
         // do nothing
+        console.log(err.code, err.message);
       }
     }
   }
