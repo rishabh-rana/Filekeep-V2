@@ -2,7 +2,8 @@ import {
   IRawPrivateStructureObject,
   PrivateStructureMap,
   ITagidToTagnameMap,
-  IDeletionMap
+  IDeletionMap,
+  IPrivateStructureObject
 } from "../../../modules/appTypes";
 
 // this function compares two arrays and returns the  items that were missing from ArrayOne wrt Array two
@@ -13,7 +14,6 @@ const calculateParentsToBeDeleted = (
   //
   let parentDiffs: string[] | null = null;
   let isEqual = true;
-  console.log(arrayOne, arrayTwo);
   // if arrayone is smaller, then we need to return missing items
   if (arrayOne.length < arrayTwo.length) {
     const helper: string[] = [];
@@ -25,7 +25,6 @@ const calculateParentsToBeDeleted = (
     });
     // set deletionDiff to helper array
     parentDiffs = helper;
-    console.log(helper);
     return {
       isEqual: false,
       parentDiffs
@@ -48,15 +47,11 @@ export const returnDiffs = (
   copyOfServerData: PrivateStructureMap | false;
   deletionMap: IDeletionMap;
 } => {
-  // this is the difference map to be returned
-  const time = Date.now();
-
-  // let localData: IterableIterator<IPrivateStructureObject> | false;
-
   const serverDataMap: PrivateStructureMap = new Map();
+  // this is the difference map to be returned
   const deletionMap: IDeletionMap = {};
   let isBothDataEqual: boolean = true;
-
+  const time = Date.now();
   // make new map from server
   serverData.forEach(obj => {
     const { tag } = obj;
@@ -70,6 +65,7 @@ export const returnDiffs = (
       tagName: tagIdToTagNameMap[tag]
     });
   });
+  console.log("MAPPING OP", Date.now() - time);
 
   // return the new map if no local data was there
   if (!localDataMap) {
@@ -84,10 +80,12 @@ export const returnDiffs = (
 
   while (!currentIterator.done) {
     const { tag } = currentIterator.value;
-    if (serverDataMap.has(tag)) {
+    let serverDoc = serverDataMap.get(tag);
+
+    if (serverDoc) {
       const { parentDiffs, isEqual } = calculateParentsToBeDeleted(
         //@ts-ignore
-        serverDataMap.get(tag).parents,
+        serverDoc.parents,
         currentIterator.value.parents
       );
       if (parentDiffs) {
@@ -112,9 +110,9 @@ export const returnDiffs = (
     }
     currentIterator = iterator.next();
   }
+  console.log("Dele", Date.now() - time);
 
   // return diffs
-  console.log("BENCHMARK", Date.now() - time);
   return {
     copyOfServerData: isBothDataEqual ? false : serverDataMap,
     deletionMap

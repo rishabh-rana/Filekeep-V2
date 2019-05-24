@@ -16,6 +16,7 @@ import { handleCachingStructure } from "./APIs/caching/databaseStructure/handleC
 import { IErrorPopup } from "./modules/error/errorTypes";
 import SetupFilekeep from "./pages/SetupFilekeep";
 import AppMainRouter from "./AppMainRouter";
+import { getData } from "./APIs/caching/test/generateData";
 
 interface IAppProps {
   uid: string | null;
@@ -31,6 +32,7 @@ const App: React.FC<IAppProps> = (props: IAppProps) => {
   useEffect(() => {
     if (props.uid) {
       // push notifications
+      //@ts-ignore
       setupPushNotifications(props.uid);
       // logout if session has timed out or firebase has logged you out
       LogoutAfterTimeout();
@@ -51,6 +53,8 @@ const App: React.FC<IAppProps> = (props: IAppProps) => {
 
   // view authscreen if not signed In
   if (!props.uid) return <SignInWithGoogle />;
+
+  return <div onClick={() => getData()}>TEST</div>;
 
   // app
   return (

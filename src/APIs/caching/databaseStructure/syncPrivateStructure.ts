@@ -1,4 +1,4 @@
-import { firestore } from "../../../config/firebase";
+import { firestore, functions } from "../../../config/firebase";
 import {
   COMPANIES_COLLECTION,
   USERS_SUBCOLLECTION
@@ -13,10 +13,7 @@ import {
   IPrivateStructureIndexedDBObject,
   TAGID_TO_TAGNAME_MAP,
   ITagidToTagnameMap,
-  IRawPrivateStructureObject,
-  PrivateStructureMap,
-  PUBLIC_STRUCTURE,
-  IDeletionMap
+  IRawPrivateStructureObject
 } from "../../../modules/appTypes";
 import { returnDiffs } from "./helperFunctions";
 import store from "../../../store";
@@ -57,27 +54,15 @@ export const syncPrivateStructure = (): Promise<true> => {
         // it implies it is a fresh creation
         // we just sync all public assets of company with the new signup
         if (!serverData[PRIVATE_STRUCTURE]) {
-          // get public assets
-          const doc = await firestore
-            .collection(COMPANIES_COLLECTION)
-            .doc(activeCompany)
-            .get();
-          const data = doc.data();
-
-          if (!data || !data[PUBLIC_STRUCTURE]) {
-            // this means some serious error or misconfiguration occured
-            resolveOnce();
-            return;
-          }
-          // update the private assets using a cloud function later
-          // firestore
-          //   .collection(COMPANIES_COLLECTION)
-          //   .doc(activeCompany)
-          //   .collection(USERS_SUBCOLLECTION)
-          //   .doc(uid)
-          //   .update({
-          //     [PRIVATE_STRUCTURE]: data[PUBLIC_STRUCTURE]
-          //   });
+          // sync public assets over to private assets
+          functions
+            .httpsCallable("handlePublicShare")({
+              deletionMap: {},
+              activeCompany
+            })
+            .catch(err => {
+              console.log(err);
+            });
 
           resolveOnce();
           return;
@@ -134,6 +119,7 @@ const syncOperation = async (
       keyPath: PRIVATE_STRUCTURE,
       data: copyOfServerData
     });
+
     // sync state with new object, this will do on every realtime sync
     store.dispatch(SyncPrivateStructureMap(copyOfServerData));
   }
