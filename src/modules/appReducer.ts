@@ -14,7 +14,11 @@ const initialState: IApplicationState = {
   activeCompany: null,
   private_structure: null,
   tagIdToNameMap: null,
-  setupCompany: false
+  setupCompany: localStorage.getItem(
+    `settingUp${localStorage.getItem("activeCompany")}`
+  )
+    ? true
+    : false
 };
 
 const reducer = (

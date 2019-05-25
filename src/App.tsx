@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useReducer, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { connect } from "react-redux";
 import { AppState } from "./modules/indexReducer";
 import SignInWithGoogle from "./pages/Login";
@@ -23,6 +23,7 @@ interface IAppProps {
   throwError(errorObj: IErrorPopup): void;
   syncActiveCompany(activeCompany: string): void;
   activeCompany: string | null;
+  setupCompany: boolean;
 }
 
 const App: React.FC<IAppProps> = (props: IAppProps) => {
@@ -37,6 +38,7 @@ const App: React.FC<IAppProps> = (props: IAppProps) => {
   const [unsubscribe, changeUnsubscribe] = useState<(() => void)[]>();
 
   const setupAppForUser = async () => {
+    console.log("setting up App for user");
     await bootAppLoadData();
     const unsubscribeStructure = await handleCachingStructure();
     // logout if session has timed out or firebase has logged you out
@@ -45,7 +47,8 @@ const App: React.FC<IAppProps> = (props: IAppProps) => {
   };
 
   useEffect(() => {
-    if (props.uid) {
+    if (props.uid && !props.setupCompany) {
+      console.log("should run only on startup when signedin");
       const activeCompany = localStorage.getItem("activeCompany");
       if (activeCompany) {
         props.syncActiveCompany(activeCompany);
@@ -95,7 +98,8 @@ const App: React.FC<IAppProps> = (props: IAppProps) => {
 const mapstate = (state: AppState) => {
   return {
     uid: state.authenticationState.uid,
-    activeCompany: state.app.activeCompany
+    activeCompany: state.app.activeCompany,
+    setupCompany: state.app.setupCompany
   };
 };
 

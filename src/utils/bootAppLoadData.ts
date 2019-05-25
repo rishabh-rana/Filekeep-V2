@@ -16,23 +16,24 @@ export const bootAppLoadData = async (): Promise<boolean> => {
     // get data from indexedDb
     let isSuccess = true;
 
-    const data = await ((getDatabaseStructure(PRIVATE_STRUCTURE) as unknown) as
-      | IPrivateStructureIndexedDBObject
-      | false);
-
-    // if taglist existed, update state
-    if (data !== false) {
-      store.dispatch(SyncPrivateStructureMap(data.data));
-    } else {
-      isSuccess = false;
-    }
-
     const nameMap = (await (getDatabaseStructure(
       TAGID_TO_TAGNAME_MAP
     ) as unknown)) as ITagidToTagnameMap | false;
 
     if (nameMap !== false) {
       store.dispatch(SyncNameMap(nameMap));
+    } else {
+      isSuccess = false;
+    }
+
+    const data = await ((getDatabaseStructure(PRIVATE_STRUCTURE) as unknown) as
+      | IPrivateStructureIndexedDBObject
+      | false);
+
+    // if taglist existed, update state
+    if (data !== false) {
+      console.log(data.data);
+      store.dispatch(SyncPrivateStructureMap(data.data));
     } else {
       isSuccess = false;
     }

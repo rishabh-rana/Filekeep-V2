@@ -4,14 +4,13 @@ import {
   INFORMATION_SUBCOLLECTION,
   PRIVATE_INFORMATION
 } from "../config/firestoreConstants";
-import { getVariableServerPaths } from "./getVariableServerPaths";
 import store from "../store";
 import { SyncSetupCompany } from "../modules/appActionCreator";
 
-export const createNewCompany = async (uidOpt?: { uid: string }) => {
+export const createNewCompany = async (uid: string) => {
+  store.dispatch(SyncSetupCompany(true));
   const handleSignup = functions.httpsCallable("handleSignup");
   const { data } = await handleSignup();
-  const { uid } = uidOpt ? uidOpt : await getVariableServerPaths();
 
   // set active project
   if (data.newCompanyId && uid) {
@@ -25,9 +24,7 @@ export const createNewCompany = async (uidOpt?: { uid: string }) => {
         last_active: Date.now()
       });
     localStorage.setItem("activeCompany", data.newCompanyId);
-    store.dispatch(SyncSetupCompany(true));
-    // we will update the active company when setup is complete
-    // store.dispatch(SyncActiveCompany(data.newCompanyId));
-    console.log("CREATED NEW CONPANY");
   }
+
+  return;
 };

@@ -70,7 +70,7 @@ export const syncPrivateStructure = (): Promise<() => void> => {
         }
 
         // successfully got serverData
-        const done = await syncOperation(serverData[PRIVATE_STRUCTURE]);
+        await syncOperation(serverData[PRIVATE_STRUCTURE]);
         resolveOnce(unsubscribe);
       });
   });

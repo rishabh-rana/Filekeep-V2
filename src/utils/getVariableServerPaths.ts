@@ -36,6 +36,7 @@ export const getVariableServerPaths = async (): Promise<IReturns> => {
 export const updateActiveCompany = async (
   uid: string
 ): Promise<string | null> => {
+  console.log("ERROR ONE O ONE");
   if (uid) {
     const userDoc = await firestore
       .collection(USER_COLLECTION)

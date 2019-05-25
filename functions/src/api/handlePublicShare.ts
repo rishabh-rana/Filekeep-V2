@@ -43,6 +43,7 @@ export const handlePublicShare = async (
               "Cannot access user collection"
             );
           });
+
         const data1 = doc.data();
         if (data1) {
           //@ts-ignore
@@ -122,7 +123,6 @@ export const handlePublicShare = async (
         }
       });
     }
-
     publicStructure.forEach(obj => {
       const { tag } = obj;
       if (privateStructureMap.hasOwnProperty(tag)) {
@@ -150,7 +150,6 @@ export const handlePublicShare = async (
         privateStructureMap[tag] = obj;
       }
     });
-
     const finalArray: IRawPrivateStructureObject[] = [];
 
     Object.keys(privateStructureMap).forEach(tag => {
@@ -167,7 +166,6 @@ export const handlePublicShare = async (
       .catch(() => {
         throw new HttpsError("unavailable", "Cannot update shared assets");
       });
-
     return {
       done: true
     };

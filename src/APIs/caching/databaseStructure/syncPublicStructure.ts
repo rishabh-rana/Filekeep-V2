@@ -26,40 +26,31 @@ export const syncPublicStructure = async (): Promise<() => void> => {
   // no active company
   if (!activeCompany) return () => {};
 
-  const promise: Promise<() => void> = new Promise((resolve, reject) => {
-    let resolveOnce = (unsubs: () => void) => {
-      resolveOnce = () => {};
-      resolve(unsubs);
-    };
-
-    unsubscribe = firestore
-      .collection(COMPANIES_COLLECTION)
-      .doc(activeCompany)
-      .onSnapshot(async doc => {
-        const serverData = doc.data();
-        console.log("SNAPSHOT RECEIVED FROM PUBLIC");
-        if (!serverData) {
-          resolveOnce(() => {});
-          return;
-        }
-        // sync nameMap
-        if (serverData[TAGID_TO_TAGNAME_MAP]) {
-          // sync name map
-          addDatabaseStructureData({
-            keyPath: TAGID_TO_TAGNAME_MAP,
-            data: serverData[TAGID_TO_TAGNAME_MAP]
-          });
-          store.dispatch(SyncNameMap(serverData[TAGID_TO_TAGNAME_MAP]));
-        }
-        console.log("trying sync public", serverData);
-        // execute sync
-        const success = await performPublicSync(
-          serverData[PUBLIC_STRUCTURE],
-          serverData[TAGID_TO_TAGNAME_MAP]
-        );
-        resolveOnce(() => {});
-      });
-  });
+  unsubscribe = firestore
+    .collection(COMPANIES_COLLECTION)
+    .doc(activeCompany)
+    .onSnapshot(async doc => {
+      const serverData = doc.data();
+      console.log("SNAPSHOT RECEIVED FROM PUBLIC");
+      if (!serverData) {
+        return;
+      }
+      // sync nameMap
+      if (serverData[TAGID_TO_TAGNAME_MAP]) {
+        // sync name map
+        addDatabaseStructureData({
+          keyPath: TAGID_TO_TAGNAME_MAP,
+          data: serverData[TAGID_TO_TAGNAME_MAP]
+        });
+        store.dispatch(SyncNameMap(serverData[TAGID_TO_TAGNAME_MAP]));
+      }
+      console.log("trying sync public", serverData);
+      // execute sync
+      performPublicSync(
+        serverData[PUBLIC_STRUCTURE],
+        serverData[TAGID_TO_TAGNAME_MAP]
+      );
+    });
   //@ts-ignore
   return unsubscribe;
 };

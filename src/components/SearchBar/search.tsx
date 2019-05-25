@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import DropDown from "./search/dropdownResults";
 import MainBar from "./search/searchBarUI";
 
@@ -398,12 +398,7 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
   //prepare new fuse if fuseindices change in the app state
 
   useEffect(() => {
-    if (
-      props &&
-      props.sharedFuseIndices &&
-      props.sharedFuseIndices &&
-      props.tagIdToNameMap
-    ) {
+    if (props && props.sharedFuseIndices && props.tagIdToNameMap) {
       var newopts: any = [];
       var opts = state.fuseFilters;
       if (opts.cached_list === true && opts.filter) {

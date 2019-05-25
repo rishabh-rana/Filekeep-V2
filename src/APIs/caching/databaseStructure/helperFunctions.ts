@@ -2,8 +2,7 @@ import {
   IRawPrivateStructureObject,
   PrivateStructureMap,
   ITagidToTagnameMap,
-  IDeletionMap,
-  IPrivateStructureObject
+  IDeletionMap
 } from "../../../modules/appTypes";
 
 // this function compares two arrays and returns the  items that were missing from ArrayOne wrt Array two
@@ -52,7 +51,6 @@ export const returnDiffs = (
   // this is the difference map to be returned
   const deletionMap: IDeletionMap = {};
   let isBothDataEqual: boolean = true;
-  const time = Date.now();
   // make new map from server
   serverData.forEach(obj => {
     const { tag } = obj;

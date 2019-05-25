@@ -11,7 +11,10 @@ import mixpanel from "../../config/mixpanel";
 import { TRACK_SIGNIN } from "../../config/mixpanelConstants";
 import { throwErrorCreator } from "../../modules/error/errorActionCreator";
 import { createNewCompany } from "../../utils/createNewCompany";
-import { SyncActiveCompany } from "../../modules/appActionCreator";
+import {
+  SyncActiveCompany,
+  SyncSetupCompany
+} from "../../modules/appActionCreator";
 
 export const signInWithGoogle = async (dispatch: Dispatch) => {
   await auth.setPersistence(per);
@@ -23,6 +26,7 @@ export const signInWithGoogle = async (dispatch: Dispatch) => {
     result.additionalUserInfo &&
     !result.additionalUserInfo.isNewUser
   ) {
+    console.log("old user's domain");
     // old user detected
     firestore
       .collection(USER_COLLECTION)
@@ -95,7 +99,7 @@ export const signInWithGoogle = async (dispatch: Dispatch) => {
       })
     );
     // execute the actual sugnup logic after dispatch, to update app state instantaneously
-    createNewCompany({ uid: result.user.uid });
+    createNewCompany(result.user.uid);
   } else {
     // dispatch error handler
     dispatch(

@@ -31,7 +31,9 @@ const Profile: React.FC<IProps> = (props: IProps) => {
     <React.Fragment>
       <div>Name: {props.profile.displayName}</div>
       <Button onClick={signout}>Signout</Button>
-      <Button onClick={() => createNewCompany()}>Retry Shiut</Button>
+      <Button onClick={() => createNewCompany(props.profile.uid as string)}>
+        Retry Shiut
+      </Button>
     </React.Fragment>
   );
 };
