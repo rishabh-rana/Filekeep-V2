@@ -6,8 +6,8 @@ import {
   IFireStoreResponse,
   RECIEVED_FIRESTORE_RESPONSE,
   SYNC_UNSUBSCRIBE_LISTENERS,
-  ISyncUnsubscribeListeners
-} from "./structuralSearchTypes";
+  ISyncUnsubscribeListenersAction
+} from "./types";
 
 export const sendStructuralSearchQueryCreator = (
   queryData: IStructuralSearchQueryData
@@ -29,9 +29,18 @@ export const receivedFirestoreResponseCreator = (
 
 export const syncUnsubscribeListenersCreator = (
   unsubscribe: () => void
-): ISyncUnsubscribeListeners => {
+): ISyncUnsubscribeListenersAction => {
   return {
     type: SYNC_UNSUBSCRIBE_LISTENERS,
     payload: unsubscribe
   };
 };
+
+// export const syncUnsubscribeListenersCreator = (
+//   unsubscribe: () => void
+// ): ISyncUnsubscribeListeners => {
+//   return {
+//     type: SYNC_UNSUBSCRIBE_LISTENERS,
+//     payload: unsubscribe
+//   };
+// };

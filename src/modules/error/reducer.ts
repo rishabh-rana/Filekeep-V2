@@ -4,7 +4,7 @@ import {
   IRESOLVE_ERROR_ACTION,
   THROW_ERROR,
   RESOLVE_ERROR
-} from "./errorTypes";
+} from "./types";
 import { colors } from "../../colors";
 
 const initialState: IErrorState = {

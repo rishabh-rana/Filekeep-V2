@@ -2,7 +2,7 @@ import React from "react";
 import styled from "styled-components";
 import { connect } from "react-redux";
 import { AppState } from "../modules/indexReducer";
-import { IAuthState } from "../modules/auth/authTypes";
+import { IAuthState } from "../modules/auth/types";
 import { colors } from "../colors";
 
 import { createNewCompany } from "../utils/createNewCompany";

@@ -5,7 +5,7 @@ import {
   SEND_STRUCTURAL_SEARCH_QUERY,
   IReceivedFirestoreResponseAction,
   RECIEVED_FIRESTORE_RESPONSE
-} from "../../modules/app/search/structuralSearchTypes";
+} from "../../modules/app/buildStructure/types";
 import { augmentQueries } from "./helper/augmentQueries";
 import { parseInput } from "./helper/parseInput";
 import { buildQueryFromInput } from "./helper/buildFireStoreQuery";
@@ -20,10 +20,8 @@ export const executeStructuralQuery = (
     return next(action);
   }
   const activeCompany = action.payload.activeCompany;
-  const augmentedQueries = augmentQueries(
-    parseInput(action.payload.inputParser),
-    activeCompany
-  );
+  const parsedInput = parseInput(action.payload.inputParser);
+  const augmentedQueries = augmentQueries(parsedInput, activeCompany);
   const fireStoreQueries = buildQueryFromInput(augmentedQueries, activeCompany);
 
   //   executeFirestoreGet(fireStoreQueries);

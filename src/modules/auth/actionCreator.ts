@@ -1,4 +1,4 @@
-import { SYNC_USERS, ISyncUsersAction, IUserData } from "./authTypes";
+import { SYNC_USERS, ISyncUsersAction, IUserData } from "./types";
 
 export function SyncUsers(userData: IUserData): ISyncUsersAction {
   return {

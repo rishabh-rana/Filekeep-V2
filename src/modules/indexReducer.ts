@@ -1,9 +1,9 @@
 import { combineReducers } from "redux";
 
-import auth from "./auth/authReducer";
-import error from "./error/errorReducer";
+import auth from "./auth/reducer";
+import error from "./error/reducer";
 import app from "./appReducer";
-import search from "./app/search/structuralSearchReducer";
+import search from "./app/buildStructure/reducer";
 
 const rootReducer = combineReducers({
   authenticationState: auth,

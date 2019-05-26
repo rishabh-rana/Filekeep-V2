@@ -1,6 +1,7 @@
 export const SEND_STRUCTURAL_SEARCH_QUERY = "sendStructuralSearchQuery";
 export const RECIEVED_FIRESTORE_RESPONSE = "receivedFirestoreResponse";
 export const SYNC_UNSUBSCRIBE_LISTENERS = "syncUnsubscribeListeners";
+export const BUILD_MAIN_STRUCTURE_MAP = "buildMainStructureMap";
 
 export interface IStructuralSearchQueryData {
   inputParser: string[];
@@ -19,7 +20,7 @@ export interface IReceivedFirestoreResponseAction {
   payload: IFireStoreResponse;
 }
 
-export interface ISyncUnsubscribeListeners {
+export interface ISyncUnsubscribeListenersAction {
   type: typeof SYNC_UNSUBSCRIBE_LISTENERS;
   payload: () => void;
 }

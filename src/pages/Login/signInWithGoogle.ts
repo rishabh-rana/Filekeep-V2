@@ -6,10 +6,10 @@ import {
   PRIVATE_INFORMATION,
   PUBLIC_INFORMATION
 } from "../../config/firestoreConstants";
-import { SyncUsers } from "../../modules/auth/authActionCreator";
+import { SyncUsers } from "../../modules/auth/actionCreator";
 import mixpanel from "../../config/mixpanel";
 import { TRACK_SIGNIN } from "../../config/mixpanelConstants";
-import { throwErrorCreator } from "../../modules/error/errorActionCreator";
+import { throwErrorCreator } from "../../modules/error/actionCreator";
 import { createNewCompany } from "../../utils/createNewCompany";
 import {
   SyncActiveCompany,

@@ -1,5 +1,5 @@
 import firebase from "firebase/app";
-import { SyncUsers } from "../modules/auth/authActionCreator";
+import { SyncUsers } from "../modules/auth/actionCreator";
 import store from "../store";
 import mixpanel from "../config/mixpanel";
 import { FOUND_MESSING_WITH_CODE } from "../config/mixpanelConstants";

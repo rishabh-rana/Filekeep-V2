@@ -3,13 +3,13 @@ import { connect } from "react-redux";
 import { AppState } from "./modules/indexReducer";
 import SignInWithGoogle from "./pages/Login";
 
-import { throwErrorCreator } from "./modules/error/errorActionCreator";
+import { throwErrorCreator } from "./modules/error/actionCreator";
 import ErrorBoundary from "./components/ErrorHandlers/ErrorBoundary";
 
 // import { setupPushNotifications } from "./utils/setupPushNotifications";
 import { verifyLogin, LogoutAfterTimeout } from "./utils/verifyLogin";
 import { BrowserRouter, Route, Switch } from "react-router-dom";
-import { IErrorPopup } from "./modules/error/errorTypes";
+import { IErrorPopup } from "./modules/error/types";
 import SetupFilekeep from "./pages/SetupFilekeep";
 import AppMainRouter from "./AppMainRouter";
 import { bootAppLoadData } from "./utils/bootAppLoadData";

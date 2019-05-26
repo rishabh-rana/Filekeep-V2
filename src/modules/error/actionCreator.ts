@@ -4,7 +4,7 @@ import {
   IErrorPopup,
   ITHROW_ERROR_ACTION,
   IRESOLVE_ERROR_ACTION
-} from "./errorTypes";
+} from "./types";
 
 export function throwErrorCreator(errorObj: IErrorPopup): ITHROW_ERROR_ACTION {
   return {

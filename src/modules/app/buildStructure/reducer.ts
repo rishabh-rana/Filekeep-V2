@@ -1,10 +1,10 @@
 import {
-  ISyncUnsubscribeListeners,
+  ISyncUnsubscribeListenersAction,
   IReceivedFirestoreResponseAction,
   ISearchState,
   SYNC_UNSUBSCRIBE_LISTENERS,
   RECIEVED_FIRESTORE_RESPONSE
-} from "./structuralSearchTypes";
+} from "./types";
 
 const initialState: ISearchState = {
   unsubscribeListeners: [],
@@ -13,7 +13,7 @@ const initialState: ISearchState = {
 
 const reducer = (
   state = initialState,
-  action: ISyncUnsubscribeListeners | IReceivedFirestoreResponseAction
+  action: ISyncUnsubscribeListenersAction | IReceivedFirestoreResponseAction
 ): ISearchState => {
   switch (action.type) {
     case SYNC_UNSUBSCRIBE_LISTENERS:

@@ -2,10 +2,10 @@ import React, { useEffect } from "react";
 import { connect } from "react-redux";
 import styled, { keyframes } from "styled-components";
 
-import { resolveErrorCreator } from "../../modules/error/errorActionCreator";
+import { resolveErrorCreator } from "../../modules/error/actionCreator";
 
 import { AppState } from "../../modules/indexReducer";
-import { IErrorState } from "../../modules/error/errorTypes";
+import { IErrorState } from "../../modules/error/types";
 
 const comeInFromTop = keyframes`
   0% {

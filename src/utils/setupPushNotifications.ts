@@ -5,7 +5,7 @@ import {
   PRIVATE_INFORMATION
 } from "../config/firestoreConstants";
 import store from "../store";
-import { throwErrorCreator } from "../modules/error/errorActionCreator";
+import { throwErrorCreator } from "../modules/error/actionCreator";
 import { colors } from "../colors";
 
 const requestPermissionForPush = async (uid: string) => {
