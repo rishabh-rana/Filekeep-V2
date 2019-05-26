@@ -14,7 +14,7 @@ interface IReturns {
 
 export const getVariableServerPaths = async (): Promise<IReturns> => {
   const state = store.getState();
-  let activeCompany = state.app.activeCompany;
+  let activeCompany = state.app.appCore.activeCompany;
 
   const uid = state.authenticationState.uid;
   // if active company is not found in state

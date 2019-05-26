@@ -29,7 +29,7 @@ const AppMainRouter: React.FC<IProps> = (props: IProps) => {
 
 const mapstate = (state: AppState) => {
   return {
-    shouldSetupCompany: state.app.setupCompany
+    shouldSetupCompany: state.app.appCore.setupCompany
   };
 };
 

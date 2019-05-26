@@ -1,8 +1,10 @@
 export const SEND_STRUCTURAL_SEARCH_QUERY = "sendStructuralSearchQuery";
+export const RECIEVED_FIRESTORE_RESPONSE = "receivedFirestoreResponse";
+export const SYNC_UNSUBSCRIBE_LISTENERS = "syncUnsubscribeListeners";
 
 export interface IStructuralSearchQueryData {
   inputParser: string[];
-  viewOptions: IStructuralSearchQuery_ViewOptions;
+  activeCompany: string;
 }
 
 export interface ISendStructuralSearchQueryAction {
@@ -10,7 +12,24 @@ export interface ISendStructuralSearchQueryAction {
   payload: IStructuralSearchQueryData;
 }
 
-export interface IStructuralSearchQuery_ViewOptions {
-  displayType: string;
-  structureBy: string;
+export interface IFireStoreResponse {}
+
+export interface IReceivedFirestoreResponseAction {
+  type: typeof RECIEVED_FIRESTORE_RESPONSE;
+  payload: IFireStoreResponse;
 }
+
+export interface ISyncUnsubscribeListeners {
+  type: typeof SYNC_UNSUBSCRIBE_LISTENERS;
+  payload: () => void;
+}
+
+export interface ISearchState {
+  unsubscribeListeners: (() => void)[];
+  primeStructure: Map<any, any>;
+}
+
+// export interface IStructuralSearchQuery_ViewOptions {
+//   displayType: string;
+//   structureBy: string;
+// }

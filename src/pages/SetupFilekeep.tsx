@@ -352,7 +352,7 @@ const SelectedView: React.FC<IPropsSelectedView> = (
 const mapState = (state: AppState) => {
   return {
     displayName: state.authenticationState.displayName,
-    returnToHome: !state.app.setupCompany,
+    returnToHome: !state.app.appCore.setupCompany,
     uid: state.authenticationState.uid
   };
 };

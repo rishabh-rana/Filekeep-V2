@@ -71,7 +71,11 @@ export const handlePublicShare = async (
       }
     });
     const privateStructurePromise = new Promise<
-      IRawPrivateStructureObject[] | false
+      | {
+          privateStructure: IRawPrivateStructureObject[];
+          securityMap: { [key: string]: true };
+        }
+      | false
     >(async (resolve, reject) => {
       const doc = await db
         .collection(COMPANIES_COLLECTION)
@@ -86,7 +90,12 @@ export const handlePublicShare = async (
       const data3 = doc.data();
       if (data3) {
         //@ts-ignore
-        resolve(data3[PRIVATE_STRUCTURE] as IRawPrivateStructureObject[]);
+        resolve({
+          privateStructure: data3[
+            PRIVATE_STRUCTURE
+          ] as IRawPrivateStructureObject[],
+          securityMap: data3["security_map"] as { [key: string]: true }
+        });
       } else {
         resolve(false);
       }
@@ -108,7 +117,15 @@ export const handlePublicShare = async (
     }
 
     const publicStructure = Values[1];
-    const privateStructure = Values[2];
+    const privateDocValues = Values[2];
+    let privateStructure: IRawPrivateStructureObject[] | false = false;
+    let securityMap: { [key: string]: true } = {};
+
+    if (privateDocValues) {
+      ({ securityMap, privateStructure } = privateDocValues);
+    }
+
+    if (!securityMap) securityMap = {};
 
     const privateStructureMap: RawPrivateStructureMap = {};
 
@@ -120,6 +137,16 @@ export const handlePublicShare = async (
           // do nothing, as in do not copy data over from the sharedStructure as this data is deleted
         } else {
           privateStructureMap[tag] = obj;
+          // setup security strings
+          obj.parents.forEach(parentId => {
+            securityMap[tag + "$" + parentId] = true;
+          });
+        }
+        if (deletionMap[tag] && deletionMap[tag].parents) {
+          //@ts-ignore
+          deletionMap[tag].parents.forEach(parentId => {
+            delete securityMap[tag + "$" + parentId];
+          });
         }
       });
     }
@@ -149,6 +176,10 @@ export const handlePublicShare = async (
         // this is new entry, add directly
         privateStructureMap[tag] = obj;
       }
+      // handle security string addition
+      obj.parents.forEach(parentId => {
+        securityMap[tag + "$" + parentId] = true;
+      });
     });
     const finalArray: IRawPrivateStructureObject[] = [];
 
@@ -161,7 +192,8 @@ export const handlePublicShare = async (
       .collection(USERS_SUBCOLLECTION)
       .doc(context.auth.uid)
       .update({
-        [PRIVATE_STRUCTURE]: finalArray
+        [PRIVATE_STRUCTURE]: finalArray,
+        security_map: securityMap
       })
       .catch(() => {
         throw new HttpsError("unavailable", "Cannot update shared assets");

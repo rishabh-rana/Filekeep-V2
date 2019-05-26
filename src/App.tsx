@@ -98,8 +98,8 @@ const App: React.FC<IAppProps> = (props: IAppProps) => {
 const mapstate = (state: AppState) => {
   return {
     uid: state.authenticationState.uid,
-    activeCompany: state.app.activeCompany,
-    setupCompany: state.app.setupCompany
+    activeCompany: state.app.appCore.activeCompany,
+    setupCompany: state.app.appCore.setupCompany
   };
 };
 

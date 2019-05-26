@@ -20,6 +20,7 @@ import {
   ITagidToTagnameMap
 } from "../../modules/appTypes";
 import { Dispatch } from "redux";
+import { getVariableServerPaths } from "../../utils/getVariableServerPaths";
 
 //styled component
 const DropList = styled.div`
@@ -262,6 +263,7 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
 
   // set options for next word, and display possible next word options in dropdown before typing
   const repairFuse = (filter: string | null, filterOn: string) => {
+    console.log("Actual repair");
     if (!props.sharedFuseIndices) {
       return;
     }
@@ -318,8 +320,8 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
         changeMatchedRecords(
           getMatchesStringArray(queryFunctionsFuse.slice(0, 3))
         );
-
-        // fuse = new Fuse(queryFunctionsFuse, FuseOptions);
+        // @ts-ignore
+        fuse = new Fuse(queryFunctionsFuse, FuseOptions);
       } else if (filterOn === "cachedListOnly") {
         let fuseIndices = Array.from(props.sharedFuseIndices.values());
         setState({
@@ -340,12 +342,15 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
   //call before setting setState, hence last element of inputParser should be previous tag
   const handleFuserepair = (tag: string | null, optionalFilter?: string) => {
     //pass null to move to intitial fuse
+
+    console.log("repairing fuse");
     if (tag === null) {
       repairFuse(null, "cachedListOnly");
       return;
     }
 
     if (queryFunctions.indexOf(tag) === -1) {
+      console.log("repairing fuse adding functions only");
       repairFuse(null, "functionsOnly");
     } else if (queryFunctions.indexOf(tag) !== -1 && tag !== "in") {
       repairFuse(null, "cachedListOnly");
@@ -367,9 +372,10 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
   };
 
   //send query to firestore
-  const sendQuery = () => {
+  const sendQuery = async () => {
     //remember to remove any current event listnerrs if required, or handle this in tabbed behaviour
-    if (!props.tagIdToNameMap) return;
+    const { activeCompany } = await getVariableServerPaths();
+    if (!props.tagIdToNameMap || !activeCompany) return;
 
     const reverseNameMap: any = {};
 
@@ -391,7 +397,7 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
 
     props.sendStructuralSearchQuery({
       inputParser: newInputParser,
-      viewOptions: { displayType: "kanban", structureBy: "tag" }
+      activeCompany
     });
   };
 
@@ -457,8 +463,8 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
 
 const mapstate = (state: AppState) => {
   return {
-    sharedFuseIndices: state.app.private_structure,
-    tagIdToNameMap: state.app.tagIdToNameMap
+    sharedFuseIndices: state.app.appCore.private_structure,
+    tagIdToNameMap: state.app.appCore.tagIdToNameMap
   };
 };
 

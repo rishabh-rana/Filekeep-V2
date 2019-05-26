@@ -1,7 +1,12 @@
 import {
   SEND_STRUCTURAL_SEARCH_QUERY,
   ISendStructuralSearchQueryAction,
-  IStructuralSearchQueryData
+  IStructuralSearchQueryData,
+  IReceivedFirestoreResponseAction,
+  IFireStoreResponse,
+  RECIEVED_FIRESTORE_RESPONSE,
+  SYNC_UNSUBSCRIBE_LISTENERS,
+  ISyncUnsubscribeListeners
 } from "./structuralSearchTypes";
 
 export const sendStructuralSearchQueryCreator = (
@@ -10,5 +15,23 @@ export const sendStructuralSearchQueryCreator = (
   return {
     type: SEND_STRUCTURAL_SEARCH_QUERY,
     payload: queryData
+  };
+};
+
+export const receivedFirestoreResponseCreator = (
+  response: IFireStoreResponse
+): IReceivedFirestoreResponseAction => {
+  return {
+    type: RECIEVED_FIRESTORE_RESPONSE,
+    payload: response
+  };
+};
+
+export const syncUnsubscribeListenersCreator = (
+  unsubscribe: () => void
+): ISyncUnsubscribeListeners => {
+  return {
+    type: SYNC_UNSUBSCRIBE_LISTENERS,
+    payload: unsubscribe
   };
 };

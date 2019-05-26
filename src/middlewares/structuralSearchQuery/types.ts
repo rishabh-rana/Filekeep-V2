@@ -1,11 +1,13 @@
-export interface IParsedQueries1 {
-  [requestedTag: string]: string[];
-}
-
-export interface IParsedQueries {
-  [requestedTag: string]: IDestructured;
-}
-
 export interface IDestructured {
   [operator: string]: string[];
 }
+
+export type SemiParsedQueryMap = Map<string, string[]>;
+
+export type ParsedQueryMap = Map<string, IDestructured>;
+
+export interface IAugmentedQuery {
+  [operator: string]: string[][];
+}
+
+export type AugmentedQueryMap = Map<string, IAugmentedQuery>;
