@@ -1,66 +1,63 @@
 import {
-  IRawPrivateStructureObject,
   PrivateStructureMap,
   ITagidToTagnameMap,
-  IDeletionMap
+  IDeletionMap,
+  IServerPrivateStructureObject,
+  IParentObject
 } from "../../../modules/appTypes";
 
 // this function compares two arrays and returns the  items that were missing from ArrayOne wrt Array two
 const calculateParentsToBeDeleted = (
-  arrayOne: string[],
-  arrayTwo: string[]
-): { isEqual: boolean; parentDiffs: string[] | null } => {
+  objectOne: IParentObject,
+  objectTwo: IParentObject
+): { isEqual: boolean; parentDiffs: IParentObject | null } => {
   //
-  let parentDiffs: string[] | null = null;
+  let parentDiffs: IParentObject | null = null;
   let isEqual = true;
-  // if arrayone is smaller, then we need to return missing items
+  // declare noth objects keys as arrays
+  const arrayOne = Object.keys(objectOne);
+  const arrayTwo = Object.keys(objectTwo);
+
   if (arrayOne.length < arrayTwo.length) {
-    const helper: string[] = [];
-    // add missing items to helper array
+    // check for deleted items and add to diffs
+    const helper: IParentObject = {};
     arrayTwo.forEach(item => {
-      if (arrayOne.indexOf(item) === -1) {
-        helper.push(item);
-      }
+      if (objectOne[item] === undefined) helper[item] = true;
     });
-    // set deletionDiff to helper array
     parentDiffs = helper;
     return {
       isEqual: false,
       parentDiffs
     };
   }
-
-  // check equality of individual items
-  arrayOne.forEach((data: string, index: number) => {
-    if (data !== arrayTwo[index]) isEqual = false;
+  // check for presence of all items
+  arrayOne.forEach(item => {
+    if (objectTwo[item] === undefined) isEqual = false;
   });
+
   // return diffs and isEqual
   return { isEqual, parentDiffs };
 };
 
 export const returnDiffs = (
-  serverData: IRawPrivateStructureObject[],
+  serverData: IServerPrivateStructureObject,
   localDataMap: PrivateStructureMap | false,
   tagIdToTagNameMap: ITagidToTagnameMap
 ): {
   copyOfServerData: PrivateStructureMap | false;
   deletionMap: IDeletionMap;
 } => {
-  console.log(serverData);
   const serverDataMap: PrivateStructureMap = new Map();
   // this is the difference map to be returned
   const deletionMap: IDeletionMap = {};
   let isBothDataEqual: boolean = true;
-  // make new map from server
-  serverData.forEach(obj => {
-    const { tag } = obj;
+
+  Object.keys(serverData).forEach(tag => {
     if (localDataMap && !localDataMap.has(tag)) {
-      // tells if there was a new insertion
       isBothDataEqual = false;
     }
     serverDataMap.set(tag, {
-      tag,
-      parents: obj.parents,
+      ...serverData[tag],
       tagName: tagIdToTagNameMap[tag]
     });
   });
@@ -72,42 +69,32 @@ export const returnDiffs = (
       deletionMap: {}
     };
   }
-  // if localDataMap !== null, calculate deletions, if any
-  const iterator = localDataMap.values();
-  let currentIterator = iterator.next();
 
-  while (!currentIterator.done) {
-    const { tag } = currentIterator.value;
+  localDataMap.forEach((localDoc, tag) => {
     let serverDoc = serverDataMap.get(tag);
 
     if (serverDoc) {
       const { parentDiffs, isEqual } = calculateParentsToBeDeleted(
-        //@ts-ignore
         serverDoc.parents,
-        currentIterator.value.parents
+        localDoc.parents
       );
       if (parentDiffs) {
-        // add parents deletions to deletionMap
         deletionMap[tag] = {
           parents: parentDiffs
         };
-        // tells a parent was deleted
         isBothDataEqual = false;
       }
-      // tells a parent was modified
       if (!isEqual) {
         isBothDataEqual = false;
       }
     } else {
-      // add tag deletions to deletionMap
       deletionMap[tag] = {
         mainTag: tag
       };
       // tells a tag was deleted
       isBothDataEqual = false;
     }
-    currentIterator = iterator.next();
-  }
+  });
 
   // return diffs
   return {

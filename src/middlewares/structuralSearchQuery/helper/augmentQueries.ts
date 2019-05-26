@@ -31,23 +31,23 @@ export const augmentQueries = (
     ) as IPrivateStructureObject;
     const newParents = lastParentTagObject.parents;
     console.log(newParents);
-    newParents.forEach(newParent => {
-      console.log(newParent);
-      if (newParent !== activeCompany) {
-        // do an addition op
-        newAdditions.push({ in: [...parentTags, newParent] });
-      } else {
-        // this means we have reached the company name, just add the parentTags now to final
-        let augmentedQ = augmentedQueries.get(primeTag);
-        if (augmentedQ) {
-          augmentedQ.in.push(parentTags);
-        } else {
-          augmentedQueries.set(primeTag, {
-            in: [parentTags]
-          });
-        }
-      }
-    });
+    // newParents.forEach(newParent => {
+    //   console.log(newParent);
+    //   if (newParent !== activeCompany) {
+    //     // do an addition op
+    //     newAdditions.push({ in: [...parentTags, newParent] });
+    //   } else {
+    //     // this means we have reached the company name, just add the parentTags now to final
+    //     let augmentedQ = augmentedQueries.get(primeTag);
+    //     if (augmentedQ) {
+    //       augmentedQ.in.push(parentTags);
+    //     } else {
+    //       augmentedQueries.set(primeTag, {
+    //         in: [parentTags]
+    //       });
+    //     }
+    //   }
+    // });
     console.log(newAdditions);
     newAdditions.forEach(query => {
       recurseAugment(query, primeTag);

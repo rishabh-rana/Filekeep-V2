@@ -6,7 +6,8 @@ import {
   TAGID_TO_TAGNAME_MAP,
   IRawPrivateStructureObject,
   ITagidToTagnameMap,
-  IPrivateStructureIndexedDBObject
+  IPrivateStructureIndexedDBObject,
+  IServerPrivateStructureObject
 } from "../../../modules/appTypes";
 import { returnDiffs } from "./helperFunctions";
 import { getVariableServerPaths } from "../../../utils/getVariableServerPaths";
@@ -31,7 +32,6 @@ export const syncPublicStructure = async (): Promise<() => void> => {
     .doc(activeCompany)
     .onSnapshot(async doc => {
       const serverData = doc.data();
-      console.log("SNAPSHOT RECEIVED FROM PUBLIC");
       if (!serverData) {
         return;
       }
@@ -44,7 +44,6 @@ export const syncPublicStructure = async (): Promise<() => void> => {
         });
         store.dispatch(SyncNameMap(serverData[TAGID_TO_TAGNAME_MAP]));
       }
-      console.log("trying sync public", serverData);
       // execute sync
       performPublicSync(
         serverData[PUBLIC_STRUCTURE],
@@ -56,7 +55,7 @@ export const syncPublicStructure = async (): Promise<() => void> => {
 };
 
 const performPublicSync = async (
-  publicStructureFromServer: IRawPrivateStructureObject[],
+  publicStructureFromServer: IServerPrivateStructureObject,
   tagIdToTagNameMap: ITagidToTagnameMap
 ): Promise<boolean> => {
   // get stored copy of public structure
@@ -69,7 +68,6 @@ const performPublicSync = async (
     storedPublicStructure ? storedPublicStructure.data : false,
     tagIdToTagNameMap
   );
-  console.log(storedPublicStructure);
 
   // there were changes, this !== false, in this case, sync public structure in IDB
   if (copyOfServerData) {
@@ -99,7 +97,6 @@ const performPublicSync = async (
       }
     }
   }
-  console.log("finished sync public");
   // exit call
   return true;
 };

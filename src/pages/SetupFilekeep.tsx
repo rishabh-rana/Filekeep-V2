@@ -7,7 +7,9 @@ import {
   IRawPrivateStructureObject,
   ITagidToTagnameMap,
   PUBLIC_STRUCTURE,
-  TAGID_TO_TAGNAME_MAP
+  TAGID_TO_TAGNAME_MAP,
+  IServerPrivateStructureObject,
+  IParentObject
 } from "../modules/appTypes";
 import { firestore } from "../config/firebase";
 import {
@@ -112,7 +114,7 @@ const SetupFilekeep: React.FC<IProps> = (props: IProps) => {
     const teamArray = processString(teams.trim());
     const projectArray = processString(projects.trim());
     const channelArray = processString(channels.trim());
-    const serverStructure: IRawPrivateStructureObject[] = [];
+    const serverStructure: IServerPrivateStructureObject = {};
     const tagidToNameMap: ITagidToTagnameMap = {};
 
     tagidToNameMap[companyName] = company;
@@ -123,43 +125,46 @@ const SetupFilekeep: React.FC<IProps> = (props: IProps) => {
       // add team's name to the nameMap
       tagidToNameMap[team] = uid;
       // add team to the structure array
-      serverStructure.push({
-        tag: uid,
-        //@ts-ignore
-        parents: [company]
-      });
+      serverStructure[uid] = {
+        parents: { [company]: true },
+        type: "proj",
+        level: 1
+      };
     });
 
     projectArray.forEach(item => {
       const proj = item.trim();
-      const parentAray: string[] = [];
+      const parentObj: IParentObject = {};
       projMap[proj].forEach(parentName => {
-        parentAray.push(tagidToNameMap[parentName]);
+        parentObj[tagidToNameMap[parentName]] = true;
       });
 
       if (projMap[proj]) {
         const uid = uuid();
         tagidToNameMap[proj] = uid;
-        serverStructure.push({
-          tag: uid,
-          parents: parentAray
-        });
+        serverStructure[uid] = {
+          parents: parentObj,
+          type: "proj",
+          level: 2
+        };
       }
     });
-    const projArrayTag: string[] = [];
+
+    const projObjectTag: IParentObject = {};
     projectArray.forEach(name => {
       const projname = name.trim();
-      projArrayTag.push(tagidToNameMap[projname]);
+      projObjectTag[tagidToNameMap[projname]] = true;
     });
     channelArray.forEach(item => {
       const cha = item.trim();
       const uid = uuid();
       tagidToNameMap[cha] = uid;
       // set all projects as parents (we need to have quick onboarding)
-      serverStructure.push({
-        tag: uid,
-        parents: projArrayTag
-      });
+      serverStructure[uid] = {
+        parents: projObjectTag,
+        type: "channel",
+        level: 3
+      };
     });
 
     const reverseMap: ITagidToTagnameMap = {};

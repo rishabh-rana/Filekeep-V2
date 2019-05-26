@@ -13,7 +13,8 @@ import {
   IPrivateStructureIndexedDBObject,
   TAGID_TO_TAGNAME_MAP,
   ITagidToTagnameMap,
-  IRawPrivateStructureObject
+  IRawPrivateStructureObject,
+  IServerPrivateStructureObject
 } from "../../../modules/appTypes";
 import { returnDiffs } from "./helperFunctions";
 import store from "../../../store";
@@ -44,7 +45,6 @@ export const syncPrivateStructure = (): Promise<() => void> => {
       .collection(USERS_SUBCOLLECTION)
       .doc(uid)
       .onSnapshot(async doc => {
-        console.log("SNAP SHOT FROM PVT");
         const serverData = doc.data();
 
         if (!serverData) {
@@ -78,7 +78,7 @@ export const syncPrivateStructure = (): Promise<() => void> => {
 };
 
 const syncOperation = async (
-  serverData: IRawPrivateStructureObject[]
+  serverData: IServerPrivateStructureObject
 ): Promise<true> => {
   // get structure from IDB
   let storedPrivateStructure = await ((getDatabaseStructure(

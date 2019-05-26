@@ -10,10 +10,9 @@ import {
 } from "../firestoreConstants";
 import {
   PUBLIC_STRUCTURE,
-  IRawPrivateStructureObject,
   PRIVATE_STRUCTURE,
-  RawPrivateStructureMap,
-  IDeletionMap
+  IDeletionMap,
+  IServerPrivateStructureObject
 } from "./appTypes";
 
 const db = admin.firestore();
@@ -29,7 +28,7 @@ export const handlePublicShare = async (
 ) => {
   if (context.auth && context.auth.uid) {
     const { deletionMap, activeCompany } = data;
-
+    console.log(deletionMap);
     const checkActiveCompanyPromise = new Promise<boolean>(
       async (resolve, reject) => {
         const doc = await db
@@ -54,7 +53,7 @@ export const handlePublicShare = async (
       }
     );
     const publicStructurePromise = new Promise<
-      IRawPrivateStructureObject[] | false
+      IServerPrivateStructureObject | false
     >(async (resolve, reject) => {
       const doc = await db
         .collection(COMPANIES_COLLECTION)
@@ -65,18 +64,15 @@ export const handlePublicShare = async (
         });
       const data2 = doc.data();
       if (data2) {
-        resolve(data2[PUBLIC_STRUCTURE] as IRawPrivateStructureObject[]);
+        resolve(data2[PUBLIC_STRUCTURE] as IServerPrivateStructureObject);
       } else {
         resolve(false);
       }
     });
-    const privateStructurePromise = new Promise<
-      | {
-          privateStructure: IRawPrivateStructureObject[];
-          securityMap: { [key: string]: true };
-        }
-      | false
-    >(async (resolve, reject) => {
+    const privateStructurePromise = new Promise<{
+      privateStructure: IServerPrivateStructureObject;
+      securityMap: { [key: string]: true };
+    }>(async (resolve, reject) => {
       const doc = await db
         .collection(COMPANIES_COLLECTION)
         .doc(activeCompany)
@@ -88,16 +84,19 @@ export const handlePublicShare = async (
           throw new HttpsError("unavailable", "Cannot access shared assets");
         });
       const data3 = doc.data();
-      if (data3) {
+      if (data3 && data3[PRIVATE_STRUCTURE] && data3["security_map"]) {
         //@ts-ignore
         resolve({
           privateStructure: data3[
             PRIVATE_STRUCTURE
-          ] as IRawPrivateStructureObject[],
+          ] as IServerPrivateStructureObject,
           securityMap: data3["security_map"] as { [key: string]: true }
         });
       } else {
-        resolve(false);
+        resolve({
+          privateStructure: {} as IServerPrivateStructureObject,
+          securityMap: {} as { [key: string]: true }
+        });
       }
     });
 
@@ -106,6 +105,8 @@ export const handlePublicShare = async (
       publicStructurePromise,
       privateStructurePromise
     ]);
+
+    console.log("values got");
 
     if (!Values[0]) {
       throw new HttpsError(
@@ -118,81 +119,53 @@ export const handlePublicShare = async (
 
     const publicStructure = Values[1];
     const privateDocValues = Values[2];
-    let privateStructure: IRawPrivateStructureObject[] | false = false;
-    let securityMap: { [key: string]: true } = {};
+    let { privateStructure, securityMap } = privateDocValues;
 
-    if (privateDocValues) {
-      ({ securityMap, privateStructure } = privateDocValues);
-    }
+    console.log(privateStructure, securityMap, "Fine HERE");
 
-    if (!securityMap) securityMap = {};
-
-    const privateStructureMap: RawPrivateStructureMap = {};
-
-    // if there was some data on the shared side, make a copy, else leave the object blank
-    if (privateStructure) {
-      privateStructure.forEach(obj => {
-        const { tag } = obj;
-        if (deletionMap[tag] && deletionMap[tag].mainTag) {
-          // do nothing, as in do not copy data over from the sharedStructure as this data is deleted
-        } else {
-          privateStructureMap[tag] = obj;
-          // setup security strings
-          obj.parents.forEach(parentId => {
-            securityMap[tag + "$" + parentId] = true;
-          });
-        }
-        if (deletionMap[tag] && deletionMap[tag].parents) {
+    if (Object.keys(privateStructure).length > 0) {
+      Object.keys(deletionMap).forEach(tagToBeDeleted => {
+        if (deletionMap[tagToBeDeleted].mainTag) {
+          // @ts-ignore
+          delete privateStructure[tagToBeDeleted];
+        } else if (deletionMap[tagToBeDeleted].parents && privateStructure) {
           //@ts-ignore
-          deletionMap[tag].parents.forEach(parentId => {
-            delete securityMap[tag + "$" + parentId];
-          });
+          Object.keys(deletionMap[tagToBeDeleted].parents).forEach(
+            (parentTobedeleted: string) => {
+              //@ts-ignore
+              delete privateStructure[tagToBeDeleted].parents[
+                parentTobedeleted
+              ];
+            }
+          );
         }
       });
     }
-    publicStructure.forEach(obj => {
-      const { tag } = obj;
-      if (privateStructureMap.hasOwnProperty(tag)) {
-        //take union of parents and handle any deletions
-        const publicParents = obj.parents;
-        const privateParents = privateStructureMap[tag].parents;
-        const helper: any = {};
-        [...publicParents, ...privateParents].forEach(tag1 => {
-          helper[tag1] = true;
+    console.log("JBYVJBKNNH");
+    Object.keys(publicStructure).forEach(tag => {
+      const publicObject = publicStructure[tag];
+      if (privateStructure[tag] !== undefined) {
+        // add any new parents here
+        const publicParents = publicObject.parents;
+
+        Object.keys(publicParents).forEach(item => {
+          privateStructure[tag].parents[item] = true;
         });
-
-        if (deletionMap[tag] && deletionMap[tag].parents) {
-          //@ts-ignore
-          deletionMap[tag].parents.forEach(deleteTag => {
-            delete helper[deleteTag];
-          });
-        }
-
-        privateStructureMap[tag] = {
-          tag,
-          parents: Object.keys(helper)
-        };
       } else {
-        // this is new entry, add directly
-        privateStructureMap[tag] = obj;
+        privateStructure[tag] = publicObject;
       }
-      // handle security string addition
-      obj.parents.forEach(parentId => {
+
+      Object.keys(publicObject.parents).forEach(parentId => {
         securityMap[tag + "$" + parentId] = true;
       });
     });
-    const finalArray: IRawPrivateStructureObject[] = [];
-
-    Object.keys(privateStructureMap).forEach(tag => {
-      finalArray.push(privateStructureMap[tag]);
-    });
-
+    console.log("yo");
     db.collection(COMPANIES_COLLECTION)
       .doc(activeCompany)
       .collection(USERS_SUBCOLLECTION)
       .doc(context.auth.uid)
       .update({
-        [PRIVATE_STRUCTURE]: finalArray,
+        [PRIVATE_STRUCTURE]: privateStructure,
         security_map: securityMap
       })
       .catch(() => {

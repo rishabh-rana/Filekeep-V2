@@ -42,9 +42,12 @@ export interface IServerPrivateStructureObject {
   [tag: string]: IRawPrivateStructureObject;
 }
 
+export interface IParentObject {
+  [tagid: string]: true;
+}
+
 export interface IRawPrivateStructureObject {
-  parents: string[];
-  children: string[];
+  parents: IParentObject;
   type: string;
   level: number;
 }
@@ -67,5 +70,5 @@ export interface ITagidToTagnameMap {
 }
 
 export interface IDeletionMap {
-  [tag: string]: { parents?: string[]; mainTag?: string };
+  [tag: string]: { parents?: IParentObject; mainTag?: string };
 }

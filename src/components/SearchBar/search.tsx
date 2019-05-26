@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import DropDown from "./search/dropdownResults";
 import MainBar from "./search/searchBarUI";
 
@@ -114,6 +114,17 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
   const handleFirstType = () => {
     setState({ ...state, turbo: true, inFocus: true });
   };
+
+  const reversetagIdToNameMap: ITagidToTagnameMap | undefined = useMemo(() => {
+    if (props.tagIdToNameMap) {
+      const helper: ITagidToTagnameMap = {};
+      Object.keys(props.tagIdToNameMap).forEach(tagid => {
+        //@ts-ignore
+        helper[props.tagIdToNameMap[tagid]] = tagid;
+      });
+      return helper;
+    }
+  }, [props.tagIdToNameMap]);
 
   //unmount DropDown by setting inFocus: false
   const handleBlur = () => {
@@ -263,25 +274,27 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
 
   // set options for next word, and display possible next word options in dropdown before typing
   const repairFuse = (filter: string | null, filterOn: string) => {
-    console.log("Actual repair");
     if (!props.sharedFuseIndices) {
       return;
     }
 
-    if (props.sharedFuseIndices && props.tagIdToNameMap) {
+    if (
+      props.sharedFuseIndices &&
+      reversetagIdToNameMap &&
+      props.tagIdToNameMap
+    ) {
       if (filterOn === "in" && filter) {
         let newOptions: any[] = [];
+        const doc = props.sharedFuseIndices.get(reversetagIdToNameMap[filter]);
 
-        Array.from(props.sharedFuseIndices.values()).forEach(index => {
-          if (index.tagName === filter && index.parents) {
-            index.parents.forEach(tag => {
-              newOptions.push({
-                //@ts-ignore
-                tagName: props.tagIdToNameMap[tag]
-              });
+        if (doc && doc.parents) {
+          Object.keys(doc.parents).forEach(tag => {
+            newOptions.push({
+              //@ts-ignore
+              tagName: props.tagIdToNameMap[tag]
             });
-          }
-        });
+          });
+        }
 
         // store details
         setState({
@@ -343,14 +356,12 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
   const handleFuserepair = (tag: string | null, optionalFilter?: string) => {
     //pass null to move to intitial fuse
 
-    console.log("repairing fuse");
     if (tag === null) {
       repairFuse(null, "cachedListOnly");
       return;
     }
 
     if (queryFunctions.indexOf(tag) === -1) {
-      console.log("repairing fuse adding functions only");
       repairFuse(null, "functionsOnly");
     } else if (queryFunctions.indexOf(tag) !== -1 && tag !== "in") {
       repairFuse(null, "cachedListOnly");
@@ -375,13 +386,13 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
   const sendQuery = async () => {
     //remember to remove any current event listnerrs if required, or handle this in tabbed behaviour
     const { activeCompany } = await getVariableServerPaths();
-    if (!props.tagIdToNameMap || !activeCompany) return;
+    if (!reversetagIdToNameMap || !activeCompany) return;
 
     const reverseNameMap: any = {};
 
-    Object.keys(props.tagIdToNameMap).forEach(tag => {
+    Object.keys(reversetagIdToNameMap).forEach(tag => {
       //@ts-ignore
-      reverseNameMap[props.tagIdToNameMap[tag]] = tag;
+      reverseNameMap[reversetagIdToNameMap[tag]] = tag;
     });
 
     const newInputParser: string[] = [];
@@ -404,22 +415,29 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
   //prepare new fuse if fuseindices change in the app state
 
   useEffect(() => {
-    if (props && props.sharedFuseIndices && props.tagIdToNameMap) {
+    if (
+      props &&
+      props.sharedFuseIndices &&
+      reversetagIdToNameMap &&
+      props.tagIdToNameMap
+    ) {
       var newopts: any = [];
       var opts = state.fuseFilters;
       if (opts.cached_list === true && opts.filter) {
         let newOptions: any[] = [];
 
-        Array.from(props.sharedFuseIndices.values()).forEach(index => {
-          if (index.tag === opts.filter && index.parents) {
-            index.parents.forEach(tag => {
-              newOptions.push({
-                //@ts-ignore
-                tagName: props.tagIdToNameMap[tag]
-              });
+        const doc = props.sharedFuseIndices.get(
+          reversetagIdToNameMap[opts.filter]
+        );
+        if (doc && doc.parents) {
+          Object.keys(doc.parents).forEach(tag => {
+            newOptions.push({
+              //@ts-ignore
+              tagName: props.tagIdToNameMap[tag]
             });
-          }
-        });
+          });
+        }
+
         newopts = [...newOptions];
       } else if (opts.cached_list === true) {
         newopts = [...newopts, ...Array.from(props.sharedFuseIndices.values())];
