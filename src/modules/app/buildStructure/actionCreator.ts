@@ -3,11 +3,14 @@ import {
   ISendStructuralSearchQueryAction,
   IStructuralSearchQueryData,
   IReceivedFirestoreResponseAction,
-  IFireStoreResponse,
   RECIEVED_FIRESTORE_RESPONSE,
   SYNC_UNSUBSCRIBE_LISTENERS,
-  ISyncUnsubscribeListenersAction
+  ISyncUnsubscribeListenersAction,
+  IBuildMainStructureMapAction,
+  BUILD_MAIN_STRUCTURE_MAP,
+  IParsedFirestoreResponse
 } from "./types";
+import { ParsedQueryMap } from "../../../middlewares/structuralSearchQuery/types";
 
 export const sendStructuralSearchQueryCreator = (
   queryData: IStructuralSearchQueryData
@@ -19,7 +22,7 @@ export const sendStructuralSearchQueryCreator = (
 };
 
 export const receivedFirestoreResponseCreator = (
-  response: IFireStoreResponse
+  response: IParsedFirestoreResponse
 ): IReceivedFirestoreResponseAction => {
   return {
     type: RECIEVED_FIRESTORE_RESPONSE,
@@ -36,11 +39,11 @@ export const syncUnsubscribeListenersCreator = (
   };
 };
 
-// export const syncUnsubscribeListenersCreator = (
-//   unsubscribe: () => void
-// ): ISyncUnsubscribeListeners => {
-//   return {
-//     type: SYNC_UNSUBSCRIBE_LISTENERS,
-//     payload: unsubscribe
-//   };
-// };
+export const buildMainStructureMap = (
+  parsedQueries: ParsedQueryMap
+): IBuildMainStructureMapAction => {
+  return {
+    type: BUILD_MAIN_STRUCTURE_MAP,
+    payload: parsedQueries
+  };
+};

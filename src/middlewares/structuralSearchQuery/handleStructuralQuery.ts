@@ -2,14 +2,13 @@ import { MiddlewareAPI, AnyAction, Dispatch } from "redux";
 import { AppState } from "../../modules/indexReducer";
 import {
   ISendStructuralSearchQueryAction,
-  SEND_STRUCTURAL_SEARCH_QUERY,
-  IReceivedFirestoreResponseAction,
-  RECIEVED_FIRESTORE_RESPONSE
+  SEND_STRUCTURAL_SEARCH_QUERY
 } from "../../modules/app/buildStructure/types";
 import { augmentQueries } from "./helper/augmentQueries";
 import { parseInput } from "./helper/parseInput";
 import { buildQueryFromInput } from "./helper/buildFireStoreQuery";
 import { executeFirestoreGet } from "./helper/executeFirestoreGet";
+import { buildMainStructureMap } from "../../modules/app/buildStructure/actionCreator";
 
 export const executeStructuralQuery = (
   api: MiddlewareAPI<Dispatch<AnyAction>, AppState>
@@ -21,6 +20,8 @@ export const executeStructuralQuery = (
   }
   const activeCompany = action.payload.activeCompany;
   const parsedInput = parseInput(action.payload.inputParser);
+  // build map
+  api.dispatch(buildMainStructureMap(parsedInput));
   const augmentedQueries = augmentQueries(parsedInput, activeCompany);
   const fireStoreQueries = buildQueryFromInput(augmentedQueries, activeCompany);
 
@@ -29,15 +30,3 @@ export const executeStructuralQuery = (
 
   next(action);
 };
-
-// export const handleFirestoreGetResponse = (
-//   api: MiddlewareAPI<Dispatch<AnyAction>, AppState>
-// ) => (next: Dispatch<AnyAction>) => (
-//   action: IReceivedFirestoreResponseAction
-// ) => {
-//   if (!action.payload || action.type !== RECIEVED_FIRESTORE_RESPONSE) {
-//     return next(action);
-//   }
-
-//   next(action);
-// };

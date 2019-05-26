@@ -1,11 +1,28 @@
+import { ParsedQueryMap } from "../../../middlewares/structuralSearchQuery/types";
+
 export const SEND_STRUCTURAL_SEARCH_QUERY = "sendStructuralSearchQuery";
 export const RECIEVED_FIRESTORE_RESPONSE = "receivedFirestoreResponse";
 export const SYNC_UNSUBSCRIBE_LISTENERS = "syncUnsubscribeListeners";
 export const BUILD_MAIN_STRUCTURE_MAP = "buildMainStructureMap";
 
+type tagId = string;
+type ListStructureMap = Map<tagId, string[]>;
+export type MainStructureMap = Map<tagId, ListStructureMap>;
+
+export interface ISearchState {
+  unsubscribeListeners: (() => void)[];
+  mainStructure: MainStructureMap;
+  mainDataStore: { [tag: string]: IFireStoreResponse };
+}
+
 export interface IStructuralSearchQueryData {
   inputParser: string[];
   activeCompany: string;
+}
+export interface IFireStoreResponse {}
+
+export interface IParsedFirestoreResponse {
+  [tagId: string]: IFireStoreResponse;
 }
 
 export interface ISendStructuralSearchQueryAction {
@@ -13,11 +30,9 @@ export interface ISendStructuralSearchQueryAction {
   payload: IStructuralSearchQueryData;
 }
 
-export interface IFireStoreResponse {}
-
 export interface IReceivedFirestoreResponseAction {
   type: typeof RECIEVED_FIRESTORE_RESPONSE;
-  payload: IFireStoreResponse;
+  payload: IParsedFirestoreResponse;
 }
 
 export interface ISyncUnsubscribeListenersAction {
@@ -25,9 +40,9 @@ export interface ISyncUnsubscribeListenersAction {
   payload: () => void;
 }
 
-export interface ISearchState {
-  unsubscribeListeners: (() => void)[];
-  primeStructure: Map<any, any>;
+export interface IBuildMainStructureMapAction {
+  type: typeof BUILD_MAIN_STRUCTURE_MAP;
+  payload: ParsedQueryMap;
 }
 
 // export interface IStructuralSearchQuery_ViewOptions {

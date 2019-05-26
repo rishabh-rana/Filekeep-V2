@@ -38,9 +38,15 @@ export interface ISyncSetupCompanyAction {
 
 // Server Object
 
+export interface IServerPrivateStructureObject {
+  [tag: string]: IRawPrivateStructureObject;
+}
+
 export interface IRawPrivateStructureObject {
-  tag: string;
   parents: string[];
+  children: string[];
+  type: string;
+  level: number;
 }
 
 // App types
