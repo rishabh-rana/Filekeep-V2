@@ -8,7 +8,10 @@ import {
   ISyncNameMapAction,
   SYNC_NAMEMAP,
   ISyncSetupCompanyAction,
-  SYNC_SETUP_COMPANY
+  SYNC_SETUP_COMPANY,
+  ITagNameToTagidObject,
+  SYNC_ACTIVE_COMPANY_FOR_SETUP,
+  ISyncActiveCompanyForSetup
 } from "./appTypes";
 
 export const SyncPrivateStructureMap = (
@@ -30,11 +33,12 @@ export const SyncActiveCompany = (
 };
 
 export const SyncNameMap = (
-  nameMap: ITagidToTagnameMap
+  tagidToTagNameMap: ITagidToTagnameMap,
+  tagNameToTagidMap: ITagNameToTagidObject
 ): ISyncNameMapAction => {
   return {
     type: SYNC_NAMEMAP,
-    payload: nameMap
+    payload: { tagNameToTagidMap, tagidToTagNameMap }
   };
 };
 
@@ -44,5 +48,14 @@ export const SyncSetupCompany = (
   return {
     type: SYNC_SETUP_COMPANY,
     payload: shouldSetup
+  };
+};
+
+export const SyncActiveCompanyForSetup = (
+  activeCompany: string
+): ISyncActiveCompanyForSetup => {
+  return {
+    type: SYNC_ACTIVE_COMPANY_FOR_SETUP,
+    payload: activeCompany
   };
 };

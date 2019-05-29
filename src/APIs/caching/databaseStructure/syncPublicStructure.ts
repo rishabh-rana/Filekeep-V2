@@ -4,10 +4,11 @@ import { COMPANIES_COLLECTION } from "../../../config/firestoreConstants";
 import {
   PUBLIC_STRUCTURE,
   TAGID_TO_TAGNAME_MAP,
-  IRawPrivateStructureObject,
   ITagidToTagnameMap,
   IPrivateStructureIndexedDBObject,
-  IServerPrivateStructureObject
+  IServerPrivateStructureObject,
+  ITagNameToTagidObject,
+  TAGNAME_TO_TAGID_MAP
 } from "../../../modules/appTypes";
 import { returnDiffs } from "./helperFunctions";
 import { getVariableServerPaths } from "../../../utils/getVariableServerPaths";
@@ -35,20 +36,32 @@ export const syncPublicStructure = async (): Promise<() => void> => {
       if (!serverData) {
         return;
       }
-      // sync nameMap
-      if (serverData[TAGID_TO_TAGNAME_MAP]) {
+      const tagidToTagName: ITagidToTagnameMap = {};
+      // sync nameMap, currently we are syncing on every snapshot
+      if (serverData[TAGNAME_TO_TAGID_MAP]) {
         // sync name map
         addDatabaseStructureData({
-          keyPath: TAGID_TO_TAGNAME_MAP,
-          data: serverData[TAGID_TO_TAGNAME_MAP]
+          keyPath: TAGNAME_TO_TAGID_MAP,
+          data: serverData[TAGNAME_TO_TAGID_MAP]
         });
-        store.dispatch(SyncNameMap(serverData[TAGID_TO_TAGNAME_MAP]));
+
+        Object.keys(serverData[TAGNAME_TO_TAGID_MAP]).forEach(tagName => {
+          serverData[TAGNAME_TO_TAGID_MAP][tagName].tagids.forEach(
+            (tagid: string) => {
+              tagidToTagName[tagid] = tagName;
+            }
+          );
+        });
+        addDatabaseStructureData({
+          keyPath: TAGID_TO_TAGNAME_MAP,
+          data: tagidToTagName as any
+        });
+        store.dispatch(
+          SyncNameMap(tagidToTagName, serverData[TAGNAME_TO_TAGID_MAP])
+        );
       }
       // execute sync
-      performPublicSync(
-        serverData[PUBLIC_STRUCTURE],
-        serverData[TAGID_TO_TAGNAME_MAP]
-      );
+      performPublicSync(serverData[PUBLIC_STRUCTURE], tagidToTagName);
     });
   //@ts-ignore
   return unsubscribe;
@@ -63,7 +76,7 @@ const performPublicSync = async (
     PUBLIC_STRUCTURE
   ) as unknown) as IPrivateStructureIndexedDBObject | false);
 
-  const { copyOfServerData, deletionMap } = returnDiffs(
+  const { copyOfServerData, changeMap } = returnDiffs(
     publicStructureFromServer,
     storedPublicStructure ? storedPublicStructure.data : false,
     tagIdToTagNameMap
@@ -77,10 +90,11 @@ const performPublicSync = async (
       return false;
     } else {
       try {
+        console.log(changeMap);
         const handlePublicShare = await functions.httpsCallable(
           "handlePublicShare"
         )({
-          deletionMap,
+          changeMap,
           activeCompany
         });
         // successfully synced to privateStructure of user

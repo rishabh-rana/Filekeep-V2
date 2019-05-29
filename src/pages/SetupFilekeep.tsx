@@ -4,28 +4,21 @@ import { connect } from "react-redux";
 import { AppState } from "../modules/indexReducer";
 import { colors } from "../colors";
 import {
-  IRawPrivateStructureObject,
-  ITagidToTagnameMap,
   PUBLIC_STRUCTURE,
-  TAGID_TO_TAGNAME_MAP,
   IServerPrivateStructureObject,
-  IParentObject
+  TAGNAME_TO_TAGID_MAP,
+  ITagNameToTagidObject
 } from "../modules/appTypes";
 import { firestore } from "../config/firebase";
-import {
-  COMPANIES_COLLECTION,
-  USERS_SUBCOLLECTION,
-  USER_COLLECTION,
-  INFORMATION_SUBCOLLECTION,
-  PRIVATE_INFORMATION
-} from "../config/firestoreConstants";
+import { COMPANIES_COLLECTION } from "../config/firestoreConstants";
 import { Dispatch } from "redux";
 import {
   SyncSetupCompany,
-  SyncActiveCompany
+  SyncActiveCompany,
+  SyncActiveCompanyForSetup
 } from "../modules/appActionCreator";
 import { Redirect } from "react-router";
-import { createNewCompany } from "../utils/createNewCompany";
+import { signoutAndCleanup } from "../utils/signout";
 
 // error is occuring as the firebase listners fire immediately after sending the
 //response to the server (latency compensation) he.ce we must find a way to
@@ -49,35 +42,12 @@ interface IProps {
   displayName: string;
   uid: string | null;
   returnToHome: boolean;
+  activeCompany: string | null;
   finishSetup(activeCompany: string): void;
+  syncActiveCompany(activeCompany: string): void;
 }
 
 const SetupFilekeep: React.FC<IProps> = (props: IProps) => {
-  const [company, changeCompany] = useState<string | null>(null);
-
-  const handleAsyncMount = async () => {
-    console.log("setting up mount");
-    let activeCompany = localStorage.getItem("activeCompany");
-    if (!activeCompany && props.uid) {
-      // get from server if localStore was cleared
-      const doc = await firestore
-        .collection(USER_COLLECTION)
-        .doc(props.uid)
-        .collection(INFORMATION_SUBCOLLECTION)
-        .doc(PRIVATE_INFORMATION)
-        .get();
-      //@ts-ignore
-      const data = doc.data().active_project as string;
-      activeCompany = data;
-    }
-    changeCompany(activeCompany);
-    localStorage.setItem(`settingUp${activeCompany}`, "yes");
-  };
-
-  useEffect(() => {
-    handleAsyncMount();
-  }, []);
-
   // define state
   const [companyName, changeCompanyName] = useState("");
   const [teams, changeTeams] = useState("");
@@ -87,6 +57,18 @@ const SetupFilekeep: React.FC<IProps> = (props: IProps) => {
   const [projMap, changeProjMap] = useState<{ [project: string]: string[] }>(
     {}
   );
+
+  useEffect(() => {
+    if (props.activeCompany) {
+      console.log("setup");
+      localStorage.setItem(`settingUp${props.activeCompany}`, "yes");
+    } else {
+      const activeCompany = localStorage.getItem("activeCompany");
+      if (activeCompany) {
+        props.syncActiveCompany(activeCompany);
+      }
+    }
+  }, [props.activeCompany]);
 
   const processString = (input: string): string[] => {
     return input.split(",");
@@ -98,8 +80,9 @@ const SetupFilekeep: React.FC<IProps> = (props: IProps) => {
       teams.length < 2 ||
       projects.length < 2 ||
       Object.keys(projMap).length < 2 ||
-      !company
+      !props.activeCompany
     ) {
+      console.log("show loader later in this case if only company was missing");
       return;
     }
 
@@ -115,79 +98,89 @@ const SetupFilekeep: React.FC<IProps> = (props: IProps) => {
     const projectArray = processString(projects.trim());
     const channelArray = processString(channels.trim());
     const serverStructure: IServerPrivateStructureObject = {};
-    const tagidToNameMap: ITagidToTagnameMap = {};
+    const reverseMap: ITagNameToTagidObject = {};
 
-    tagidToNameMap[companyName] = company;
+    reverseMap[companyName] = {
+      tagids: [props.activeCompany],
+      type: "p"
+    };
 
     teamArray.forEach(item => {
       const team = item.trim();
       const uid = uuid();
       // add team's name to the nameMap
-      tagidToNameMap[team] = uid;
-      // add team to the structure array
-      serverStructure[uid] = {
-        parents: { [company]: true },
-        type: "proj",
-        level: 1
+      reverseMap[team] = {
+        tagids: [uid],
+        type: "p"
       };
+      // add team to the structure
+      serverStructure[uid] = props.activeCompany as string;
     });
 
     projectArray.forEach(item => {
       const proj = item.trim();
-      const parentObj: IParentObject = {};
       projMap[proj].forEach(parentName => {
-        parentObj[tagidToNameMap[parentName]] = true;
-      });
-
-      if (projMap[proj]) {
         const uid = uuid();
-        tagidToNameMap[proj] = uid;
-        serverStructure[uid] = {
-          parents: parentObj,
-          type: "proj",
-          level: 2
-        };
-      }
+        serverStructure[uid] = reverseMap[parentName].tagids[0];
+
+        if (reverseMap[proj]) {
+          // push the team id into the reverseMap
+          reverseMap[proj].tagids.push(uid);
+        } else {
+          reverseMap[proj] = {
+            tagids: [uid],
+            type: "p"
+          };
+        }
+      });
     });
 
-    const projObjectTag: IParentObject = {};
-    projectArray.forEach(name => {
-      const projname = name.trim();
-      projObjectTag[tagidToNameMap[projname]] = true;
-    });
+    // const projObjectTag: IParentObject = {};
+    // projectArray.forEach(name => {
+    //   const projname = name.trim();
+    //   projObjectTag[tagidToNameMap[projname]] = true;
+    // });
+
     channelArray.forEach(item => {
       const cha = item.trim();
-      const uid = uuid();
-      tagidToNameMap[cha] = uid;
+
       // set all projects as parents (we need to have quick onboarding)
-      serverStructure[uid] = {
-        parents: projObjectTag,
-        type: "channel",
-        level: 3
-      };
-    });
-
-    const reverseMap: ITagidToTagnameMap = {};
-
-    Object.keys(tagidToNameMap).forEach(name => {
-      reverseMap[tagidToNameMap[name]] = name;
+      projectArray.forEach(nm => {
+        const name = nm.trim();
+        if (reverseMap[name]) {
+          console.log(name);
+          reverseMap[name].tagids.forEach(parentId => {
+            console.log("adding a channel for", name);
+            const uid = uuid();
+            serverStructure[uid] = parentId;
+            if (reverseMap[cha]) {
+              reverseMap[cha].tagids.push(uid);
+            } else {
+              reverseMap[cha] = {
+                tagids: [uid],
+                type: "c"
+              };
+            }
+          });
+        }
+      });
     });
 
     console.log("DATA:", serverStructure);
-    console.log("MAP:", reverseMap);
-    console.log("companyName", companyName, company);
+    console.log("REVMAP:", reverseMap);
+    console.log("companyName", companyName, props.activeCompany);
 
     firestore
       .collection(COMPANIES_COLLECTION)
-      .doc(company)
+      .doc(props.activeCompany)
       .set({
         [PUBLIC_STRUCTURE]: serverStructure,
-        [TAGID_TO_TAGNAME_MAP]: reverseMap,
+        [TAGNAME_TO_TAGID_MAP]: reverseMap,
         title: companyName,
         created: Date.now()
       });
-    localStorage.removeItem(`settingUp${company}`);
-    props.finishSetup(company);
+    localStorage.removeItem(`settingUp${props.activeCompany}`);
+    props.finishSetup(props.activeCompany);
   };
 
   if (props.returnToHome) {
@@ -196,6 +189,7 @@ const SetupFilekeep: React.FC<IProps> = (props: IProps) => {
 
   return (
     <Container>
+      <button onClick={() => signoutAndCleanup()}>Logout</button>
       <Spacer>Setting up Filekeep, {props.displayName}!</Spacer>
       <Spacer>Enter your company's Name</Spacer>
       <Spacer>
@@ -358,7 +352,8 @@ const mapState = (state: AppState) => {
   return {
     displayName: state.authenticationState.displayName,
     returnToHome: !state.app.appCore.setupCompany,
-    uid: state.authenticationState.uid
+    uid: state.authenticationState.uid,
+    activeCompany: state.app.appCore.activeCompanyForSetup
   };
 };
 
@@ -367,6 +362,9 @@ const mapdispatch = (dispatch: Dispatch) => {
     finishSetup: (activeCompany: string) => {
       dispatch(SyncSetupCompany(false));
       dispatch(SyncActiveCompany(activeCompany));
+    },
+    syncActiveCompany: (activeCompany: string) => {
+      dispatch(SyncActiveCompanyForSetup(activeCompany));
     }
   };
 };

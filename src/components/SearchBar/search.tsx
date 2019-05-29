@@ -17,7 +17,8 @@ import { IStructuralSearchQueryData } from "../../modules/app/buildStructure/typ
 import {
   PrivateStructureMap,
   IPrivateStructureObject,
-  ITagidToTagnameMap
+  ITagidToTagnameMap,
+  ITagNameToTagidObject
 } from "../../modules/appTypes";
 import { Dispatch } from "redux";
 import { getVariableServerPaths } from "../../utils/getVariableServerPaths";
@@ -40,6 +41,7 @@ const Wrapper = styled.div`
 interface IProps {
   sharedFuseIndices: PrivateStructureMap | null;
   tagIdToNameMap: ITagidToTagnameMap | null;
+  reversetagIdToNameMap: ITagNameToTagidObject | null;
   sendStructuralSearchQuery(queryData: IStructuralSearchQueryData): void;
 }
 
@@ -49,17 +51,6 @@ interface IProps {
 // stopDelayMatchingTimeout : if to stop the setTimeout call on the input in case of unmount, used to ensure too uch processing doesnt take place
 // turbo: set true by handleFirstType to get results of firt keystroke without any delay
 // inFocus: determines if the input is in focus to Mount/ Unmount the DropDown
-
-interface IState {
-  turbo: boolean;
-  stopDelayMatchingTimeout: any;
-  inFocus: boolean;
-  fuseFilters: {
-    cached_list?: boolean;
-    filter?: string | null;
-    queryFunctionsFuse?: boolean;
-  };
-}
 
 //the number of results to be displayed in the dropdown &
 // the dealy before the dropdownlist updates, for performance upgrades only
@@ -89,17 +80,32 @@ const initialState: IState = {
   turbo: false,
   inFocus: false,
   stopDelayMatchingTimeout: null,
-  fuseFilters: {
-    cached_list: true
-  }
+  input: "",
+  inputParser: [],
+  matchedRecords: []
 };
+
+interface IState {
+  input: string;
+  inputParser: string[];
+  matchedRecords: string[];
+  turbo: boolean;
+  inFocus: boolean;
+  stopDelayMatchingTimeout: null | NodeJS.Timeout;
+}
 
 const SearchBar: React.FC<IProps> = (props: IProps) => {
   // state
-  const [state, setState] = useState<IState>(initialState);
-  const [input, changeInput] = useState("");
-  const [matchedRecords, changeMatchedRecords] = useState<string[]>([]);
-  const [inputParser, changeInputParser] = useState<string[]>([]);
+  const [input, changeInput] = useState(initialState.input);
+  const [matchedRecords, changeMatchedRecords] = useState(
+    initialState.matchedRecords
+  );
+  const [inputParser, changeInputParser] = useState(initialState.inputParser);
+  const [turbo, changeTurbo] = useState(initialState.turbo);
+  const [inFocus, changeInFocus] = useState(initialState.inFocus);
+  const [stopDelayMatchingTimeout, changeStopDelayMatchingTimeout] = useState(
+    initialState.stopDelayMatchingTimeout
+  );
 
   // inputRef to handle updated value of input in Timeout method (handleMatching)
   const inputRef = useRef(input);
@@ -112,34 +118,38 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
 
   //handle initial quick results for first keystroke, while also rendering the Dropdown
   const handleFirstType = () => {
-    setState({ ...state, turbo: true, inFocus: true });
+    changeTurbo(true);
+    changeInFocus(true);
   };
 
-  const reversetagIdToNameMap: ITagidToTagnameMap | undefined = useMemo(() => {
-    if (props.tagIdToNameMap) {
-      const helper: ITagidToTagnameMap = {};
-      Object.keys(props.tagIdToNameMap).forEach(tagid => {
-        //@ts-ignore
-        helper[props.tagIdToNameMap[tagid]] = tagid;
+  const calculateFuseIndices = () => {
+    if (props.sharedFuseIndices) {
+      const fuseIndices: any = {};
+      props.sharedFuseIndices.forEach(obj => {
+        fuseIndices[obj.tagName] = true;
       });
-      return helper;
+      return Object.keys(fuseIndices).map(tagName => {
+        return { tagName };
+      });
     }
-  }, [props.tagIdToNameMap]);
+  };
+
+  const fuseIndices = useMemo(calculateFuseIndices, [props.sharedFuseIndices]);
 
   //unmount DropDown by setting inFocus: false
   const handleBlur = () => {
     setTimeout(() => {
-      setState({ ...state, inFocus: false });
+      changeInFocus(false);
     }, 100);
   };
 
   // this executes when input changes, handles Matching input with FuseIndices
   useEffect(() => {
     // stopDelayMatchingTimeout -> if value exist => skip this input change, do not process this keystroke
-    if (state.stopDelayMatchingTimeout === null && fuse) {
+    if (stopDelayMatchingTimeout === null && fuse) {
       handleMatching();
     }
-    if (state.turbo) setState({ ...state, turbo: false });
+    if (turbo) changeTurbo(false);
   }, [input]);
 
   const handleChange = (e: any) => {
@@ -209,7 +219,7 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
   //handle fuzzy search with fuse.js
   //stopDelayMatchingTimeout ensures that only after "matchDelay" milliseconds, the dropdown is calculated
   const handleMatching = () => {
-    var stopDelayMatchingTimeout = setTimeout(
+    var stopDelay = setTimeout(
       () => {
         // return if fuse object is not present
         if (!fuse) return;
@@ -222,10 +232,7 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
         //if match is an exact match, remove the dropdown results, without setting stopDelayMatchingTimeout for quick unmount
         if (match && match[0] && match[0].tagName === inputRef.current) {
           handleFuserepair(inputRef.current);
-          setState({
-            ...state,
-            stopDelayMatchingTimeout: null
-          });
+          changeStopDelayMatchingTimeout(null);
           changeInputParser([...inputParser, inputRef.current]);
           changeInput("");
           // exits to prevent calling setState below
@@ -240,113 +247,78 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
           !isArraySame(matchStringArray, matchedRecords) &&
           inputRef.current !== ""
         ) {
-          setState({
-            ...state,
-            stopDelayMatchingTimeout: null
-          });
+          changeStopDelayMatchingTimeout(null);
           changeMatchedRecords(matchStringArray);
         } else {
-          setState({
-            ...state,
-            stopDelayMatchingTimeout: null
-          });
+          changeStopDelayMatchingTimeout(null);
         }
       },
-      state.turbo ? 20 : Constants.matchDelay
+      turbo ? 20 : Constants.matchDelay
     );
     //above ensure if turbo is on, only 20ms delay is done
 
     // set stopeInterval !== null to prevent more queries to match from keystrokes
-    setState({
-      ...state,
-      stopDelayMatchingTimeout: stopDelayMatchingTimeout
-    });
+
+    changeStopDelayMatchingTimeout(stopDelay);
   };
 
   //stop matching current query
   const stopMatching = () => {
-    clearTimeout(state.stopDelayMatchingTimeout);
-    setState({
-      ...state,
-      stopDelayMatchingTimeout: null
-    });
+    clearTimeout(stopDelayMatchingTimeout as any);
+    changeStopDelayMatchingTimeout(null);
   };
 
   // set options for next word, and display possible next word options in dropdown before typing
   const repairFuse = (filter: string | null, filterOn: string) => {
-    if (!props.sharedFuseIndices) {
+    if (!fuseIndices) {
       return;
     }
 
     if (
       props.sharedFuseIndices &&
-      reversetagIdToNameMap &&
+      props.reversetagIdToNameMap &&
       props.tagIdToNameMap
     ) {
       if (filterOn === "in" && filter) {
-        let newOptions: any[] = [];
-        const doc = props.sharedFuseIndices.get(reversetagIdToNameMap[filter]);
+        const helper: { [name: string]: true } = {};
 
-        if (doc && doc.parents) {
-          Object.keys(doc.parents).forEach(tag => {
-            newOptions.push({
-              //@ts-ignore
-              tagName: props.tagIdToNameMap[tag]
-            });
-          });
-        }
+        const currentIds = props.reversetagIdToNameMap[filter];
+
+        const parentIds = currentIds.tagids.map(
+          //@ts-ignore
+          id => props.sharedFuseIndices.get(id).parent
+        );
+        parentIds.forEach(id => {
+          //@ts-ignore
+          const name = props.tagIdToNameMap[id] as string;
+          helper[name] = true;
+        });
+
+        const newOptions: any = Object.keys(helper).map(word => {
+          return { tagName: word };
+        });
 
         // store details
-        setState({
-          ...state,
-          fuseFilters: {
-            cached_list: true,
-            filter: filter
-          }
-        });
+
         changeMatchedRecords(getMatchesStringArray(newOptions.slice(0, 3)));
 
         fuse = new Fuse(newOptions, FuseOptions);
       } else if (filterOn === "all") {
         // store the fuse details
-        const fuseIndex = [
-          ...Array.from(props.sharedFuseIndices.values()),
-          ...queryFunctionsFuse
-        ];
-        setState({
-          ...state,
-          fuseFilters: {
-            cached_list: true,
-            queryFunctionsFuse: true
-          }
-        });
+        const fuseIndex = [...fuseIndices, ...queryFunctionsFuse];
+
         changeMatchedRecords(getMatchesStringArray(fuseIndex.slice(0, 3)));
         // fuse = new Fuse(fuseIndex, FuseOptions);
       } else if (filterOn === "functionsOnly") {
-        setState({
-          ...state,
-          fuseFilters: {
-            queryFunctionsFuse: true
-          }
-        });
-
         changeMatchedRecords(
           getMatchesStringArray(queryFunctionsFuse.slice(0, 3))
         );
         // @ts-ignore
         fuse = new Fuse(queryFunctionsFuse, FuseOptions);
       } else if (filterOn === "cachedListOnly") {
-        let fuseIndices = Array.from(props.sharedFuseIndices.values());
-        setState({
-          ...state,
-          fuseFilters: {
-            cached_list: true
-          }
-        });
-
         changeMatchedRecords(getMatchesStringArray(fuseIndices.slice(0, 3)));
 
-        fuse = new Fuse(fuseIndices, FuseOptions);
+        fuse = new Fuse(fuseIndices as any, FuseOptions);
       }
     } else {
       changeMatchedRecords([noIndicesError]);
@@ -386,66 +358,90 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
   const sendQuery = async () => {
     //remember to remove any current event listnerrs if required, or handle this in tabbed behaviour
     const { activeCompany } = await getVariableServerPaths();
-    if (!reversetagIdToNameMap || !activeCompany) return;
+    if (!props.reversetagIdToNameMap || !activeCompany) return;
 
-    const reverseNameMap: any = {};
-
-    Object.keys(reversetagIdToNameMap).forEach(tag => {
-      //@ts-ignore
-      reverseNameMap[reversetagIdToNameMap[tag]] = tag;
+    const parser: { tagids: string[]; type: "c" | "p" }[] = [];
+    let slice = 0;
+    const queryArray: string[][] = [];
+    inputParser.forEach((tagName, i) => {
+      if (tagName === "and") {
+        queryArray.push(inputParser.slice(slice, i));
+        slice = i + 1;
+      }
     });
+    queryArray.push(inputParser.slice(slice));
 
-    const newInputParser: string[] = [];
-    inputParser.forEach(tagName => {
-      if (reverseNameMap[tagName]) {
-        // replace names by tags
-        newInputParser.push(reverseNameMap[tagName]);
+    const calculateNewTagids = (
+      heirarchy: string[],
+      currentIds: string[],
+      childIds: string[],
+      level: number
+    ) => {
+      const newTagids = childIds.filter(id => {
+        return (
+          //@ts-ignore
+          currentIds.indexOf(props.sharedFuseIndices.get(id).parent) !== -1
+        );
+      });
+
+      if (level === heirarchy.length - 1) {
+        parser.push({
+          tagids: newTagids,
+          //@ts-ignore
+          type: props.reversetagIdToNameMap[heirarchy[level]].type
+        });
       } else {
-        // for functions
-        newInputParser.push(tagName);
+        //@ts-ignore
+        calculateNewTagids(
+          heirarchy,
+          newTagids,
+          //@ts-ignore
+          props.reversetagIdToNameMap[heirarchy[level + 1]].tagids,
+          level + 1
+        );
+      }
+    };
+
+    queryArray.forEach(query => {
+      const heirarachy: string[] = [];
+      query.forEach((word, i) => {
+        if (queryFunctions.indexOf(word) === -1) {
+          heirarachy.push(word);
+        }
+      });
+      if (heirarachy.length > 1) {
+        calculateNewTagids(
+          heirarachy.reverse(),
+          //@ts-ignore
+          props.reversetagIdToNameMap[heirarachy[0]].tagids,
+          //@ts-ignore
+          props.reversetagIdToNameMap[heirarachy[1]].tagids,
+          1
+        );
+      } else {
+        // just one word exists
+        //@ts-ignore
+        parser.push(props.reversetagIdToNameMap[heirarachy[0]]);
       }
     });
 
-    props.sendStructuralSearchQuery({
-      inputParser: newInputParser,
-      activeCompany
-    });
+    console.log(parser);
+
+    // props.sendStructuralSearchQuery({
+    //   inputParser: newInputParser,
+    //   activeCompany
+    // });
   };
 
   //prepare new fuse if fuseindices change in the app state
 
   useEffect(() => {
-    if (
-      props &&
-      props.sharedFuseIndices &&
-      reversetagIdToNameMap &&
-      props.tagIdToNameMap
-    ) {
-      var newopts: any = [];
-      var opts = state.fuseFilters;
-      if (opts.cached_list === true && opts.filter) {
-        let newOptions: any[] = [];
-
-        const doc = props.sharedFuseIndices.get(
-          reversetagIdToNameMap[opts.filter]
-        );
-        if (doc && doc.parents) {
-          Object.keys(doc.parents).forEach(tag => {
-            newOptions.push({
-              //@ts-ignore
-              tagName: props.tagIdToNameMap[tag]
-            });
-          });
-        }
-
-        newopts = [...newOptions];
-      } else if (opts.cached_list === true) {
-        newopts = [...newopts, ...Array.from(props.sharedFuseIndices.values())];
-      } else if (opts.queryFunctionsFuse === true) {
-        newopts = [...newopts, ...queryFunctionsFuse];
-      }
-
-      fuse = new Fuse(newopts, FuseOptions);
+    if (fuseIndices) {
+      // reset everything if props.sharedFuseIndices change
+      changeInputParser([]);
+      changeInput("");
+      changeMatchedRecords([]);
+      fuse = new Fuse(fuseIndices as any, FuseOptions);
     }
   }, [props.sharedFuseIndices]);
 
@@ -466,7 +462,7 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
         handleBlur={handleBlur}
         handleKeyPress={handleKeyPress}
       />
-      {state.inFocus && (
+      {inFocus && (
         <DropList>
           <DropDown
             dropdownOptions={matchedRecords}
@@ -482,7 +478,8 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
 const mapstate = (state: AppState) => {
   return {
     sharedFuseIndices: state.app.appCore.private_structure,
-    tagIdToNameMap: state.app.appCore.tagIdToNameMap
+    tagIdToNameMap: state.app.appCore.tagIdToTagNameMap,
+    reversetagIdToNameMap: state.app.appCore.tagNameToTagidMap
   };
 };
 

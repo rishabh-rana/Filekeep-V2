@@ -5,7 +5,9 @@ import {
   SHARED_PROJECTS,
   COMPANY_VALIDATION_COLLECTION,
   USERS_SUBCOLLECTION,
-  USER_COLLECTION
+  USER_COLLECTION,
+  INFORMATION_SUBCOLLECTION,
+  PRIVATE_INFORMATION
 } from "../../firestoreConstants";
 import { HttpsError } from "firebase-functions/lib/providers/https";
 
@@ -69,6 +71,17 @@ export const handleSignup = async (
       })
       .catch(() => {
         throw new HttpsError("unavailable", "Cannot update user schema");
+      });
+
+    db.collection(USER_COLLECTION)
+      .doc(context.auth.uid)
+      .collection(INFORMATION_SUBCOLLECTION)
+      .doc(PRIVATE_INFORMATION)
+      .set({
+        active_project: ref.id
+      })
+      .catch(() => {
+        throw new HttpsError("unavailable", "Cannot update active project");
       });
 
     return {

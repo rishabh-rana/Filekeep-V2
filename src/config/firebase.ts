@@ -10,9 +10,13 @@ firebase.initializeApp(FirebaseConfig);
 
 // firebase.functions().useFunctionsEmulator("http://localhost:5001");
 
-const firestore = firebase.firestore();
+firebase.firestore().settings({
+  cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED
+});
 
-firestore.enablePersistence();
+firebase.firestore().enablePersistence();
+
+const firestore = firebase.firestore();
 
 const storage = firebase.storage().ref();
 const provider = new firebase.auth.GoogleAuthProvider();

@@ -3,7 +3,9 @@ import {
   PRIVATE_STRUCTURE,
   IPrivateStructureIndexedDBObject,
   TAGID_TO_TAGNAME_MAP,
-  ITagidToTagnameMap
+  ITagNameToTagidMapIndexedDbObject,
+  ITagidToTagnameMapIndexedDBObject,
+  TAGNAME_TO_TAGID_MAP
 } from "../modules/appTypes";
 import store from "../store";
 import {
@@ -18,12 +20,14 @@ export const bootAppLoadData = async (): Promise<boolean> => {
 
     const nameMap = (await (getDatabaseStructure(
       TAGID_TO_TAGNAME_MAP
-    ) as unknown)) as ITagidToTagnameMap | false;
+    ) as unknown)) as ITagidToTagnameMapIndexedDBObject | false;
 
-    if (nameMap !== false) {
-      store.dispatch(SyncNameMap(nameMap));
-    } else {
-      isSuccess = false;
+    const reversenameMap = ((await getDatabaseStructure(
+      TAGNAME_TO_TAGID_MAP
+    )) as unknown) as ITagNameToTagidMapIndexedDbObject | false;
+
+    if (nameMap !== false && reversenameMap !== false) {
+      store.dispatch(SyncNameMap(nameMap.data, reversenameMap.data));
     }
 
     const data = await ((getDatabaseStructure(PRIVATE_STRUCTURE) as unknown) as

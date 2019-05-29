@@ -1,1 +1,3 @@
-export default [];
+import { executeStructuralQuery } from "./structuralSearchQuery/handleStructuralQuery";
+
+export default [executeStructuralQuery];

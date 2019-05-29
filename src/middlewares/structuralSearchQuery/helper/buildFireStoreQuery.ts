@@ -4,8 +4,11 @@ import {
   MAIN_DATA_SUBCOLLECTION
 } from "../../../config/firestoreConstants";
 import { AugmentedQueryMap } from "../types";
-import { augmentQueries } from "./augmentQueries";
-import { parseInput } from "./parseInput";
+import store from "../../../store";
+
+const getPrivateStructure = () => {
+  return store.getState().app.appCore.private_structure;
+};
 
 //build the query from the sent options and input
 export const buildQueryFromInput = (
@@ -17,46 +20,48 @@ export const buildQueryFromInput = (
   // and only frontend is shared with me, then i will treat query as client in frontend
   // otherwise we will get permission denied from backend, prepare for this case as well
 
-  // base query
+  const private_structure = getPrivateStructure();
 
+  if (!private_structure) return [];
+
+  // base query
   const queryBase = `${COMPANIES_COLLECTION}/${activeCompany}/${MAIN_DATA_SUBCOLLECTION}/`;
 
   let firestoreQueries: firebase.firestore.Query[] = [];
 
   // loop over queries array
   augmentedQueries.forEach((augmentedQuery, primeTag) => {
-    // loop over the instruction object, (one only) to get a single key, primetag
-
     // primetag is "Client" in "Client in Frontend"
-    // set a mutatable subquery to the base query
 
     augmentedQuery.in.forEach(parentsArray => {
       let queryPathArray: string[] = [];
-      let queryArray: string[] = [];
+
       parentsArray.reverse().forEach(parent => {
-        if (queryPathArray.length < 2) {
-          queryPathArray.push(parent);
-        } else if (queryPathArray.length === 2) {
-          queryPathArray.push(parent);
-          queryPathArray.push(MAIN_DATA_SUBCOLLECTION);
-          queryArray.push(parent);
-        } else {
-          queryArray.push(parent);
-        }
-      });
-      queryPathArray.push(primeTag);
-      queryPathArray.push(MAIN_DATA_SUBCOLLECTION);
-      queryArray.push(primeTag);
-      const queryPath = queryPathArray.join("/");
-
-      if (queryPathArray.length % 2 === 1) return;
-
-      let firestoreQuery: any = firestore.collection(queryBase + queryPath);
-      queryArray.reverse().forEach((tag, i) => {
-        firestoreQuery = firestoreQuery.where("tag." + tag, "==", i + 2);
+        queryPathArray.push("project");
+        queryPathArray.push(parent);
       });
 
-      firestoreQueries.push(firestoreQuery);
+      const requestedTagDoc = private_structure.get(primeTag);
+      if (!requestedTagDoc) return;
+
+      // const type = requestedTagDoc.type === "proj" ? "project" : "channel";
+
+      // queryPathArray.push(type);
+      // queryPathArray.push(primeTag);
+      // if (type === "channel") queryPathArray.push(MAIN_DATA_SUBCOLLECTION);
+
+      // // slice(1) ensures that we dont take initial "project" entry as its already accounted for in the basestring
+      // const queryPath = queryPathArray.slice(1).join("/");
+
+      // let firestoreQuery: any;
+      // if (type === "channel") {
+      //   firestoreQuery = firestore.collection(queryBase + queryPath);
+      // } else {
+      //   firestoreQuery = firestore.doc(queryBase + queryPath);
+      // }
+      // // here we can ordering by timestamp or filters to the query
+
+      // firestoreQueries.push(firestoreQuery);
     });
   });
   // firestore queryArray is ready

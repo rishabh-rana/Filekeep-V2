@@ -12,6 +12,7 @@ export const augmentQueries = (
 ) => {
   // return map
   const augmentedQueries: AugmentedQueryMap = new Map();
+  const augmentProperties: { operatedOn: string[] } = { operatedOn: [] };
   // get pvt str from state
   const private_structure = getPrivateStructure();
   if (!private_structure) return augmentedQueries;
@@ -29,18 +30,20 @@ export const augmentQueries = (
     const lastParentTagObject = private_structure.get(
       lastParentTag
     ) as IPrivateStructureObject;
-    const newParents = lastParentTagObject.parents;
-    console.log(newParents);
-    // newParents.forEach(newParent => {
+
+    // const newParents = lastParentTagObject.parents;
+
+    // Object.keys(newParents).forEach(newParent => {
     //   console.log(newParent);
     //   if (newParent !== activeCompany) {
     //     // do an addition op
     //     newAdditions.push({ in: [...parentTags, newParent] });
     //   } else {
     //     // this means we have reached the company name, just add the parentTags now to final
-    //     let augmentedQ = augmentedQueries.get(primeTag);
-    //     if (augmentedQ) {
-    //       augmentedQ.in.push(parentTags);
+    //     console.log("Adding here");
+    //     let augmentedQRef = augmentedQueries.get(primeTag);
+    //     if (augmentedQRef) {
+    //       augmentedQRef.in.push(parentTags);
     //     } else {
     //       augmentedQueries.set(primeTag, {
     //         in: [parentTags]

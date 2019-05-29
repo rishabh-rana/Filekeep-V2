@@ -11,10 +11,9 @@ import {
 import {
   PRIVATE_STRUCTURE,
   IPrivateStructureIndexedDBObject,
-  TAGID_TO_TAGNAME_MAP,
   ITagidToTagnameMap,
-  IRawPrivateStructureObject,
-  IServerPrivateStructureObject
+  IServerPrivateStructureObject,
+  TAGID_TO_TAGNAME_MAP
 } from "../../../modules/appTypes";
 import { returnDiffs } from "./helperFunctions";
 import store from "../../../store";
@@ -52,19 +51,8 @@ export const syncPrivateStructure = (): Promise<() => void> => {
           return;
         }
         // if no private_strucutre field exist on the data from server
-        // it implies it is a fresh creation
-        // we just sync all public assets of company with the new signup
+        // just ignore snapshot newone will come
         if (!serverData[PRIVATE_STRUCTURE]) {
-          // sync public assets over to private assets
-          functions
-            .httpsCallable("handlePublicShare")({
-              deletionMap: {},
-              activeCompany
-            })
-            .catch(err => {
-              console.log(err);
-            });
-
           resolveOnce(unsubscribe);
           return;
         }

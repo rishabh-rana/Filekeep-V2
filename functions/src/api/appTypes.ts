@@ -6,21 +6,12 @@ export const TAGID_TO_TAGNAME_MAP = "tagidToTagnameMap";
 // Server Object
 
 export interface IServerPrivateStructureObject {
-  [tag: string]: IRawPrivateStructureObject;
-}
-
-export interface IRawPrivateStructureObject {
-  parents: IParentObject;
-  type: string;
-  level: number;
+  [tag: string]: string;
 }
 
 // App types
 
-export interface IParentObject {
-  [tagid: string]: true;
-}
-
-export interface IDeletionMap {
-  [tag: string]: { parents?: IParentObject; mainTag?: string };
+export interface IChangeMap {
+  deletions: string[];
+  insertions: IServerPrivateStructureObject;
 }
