@@ -13,7 +13,10 @@ import {
   queryFunctionsFuse,
   queryFunctions
 } from "../../appData/queryFunctions";
-import { IStructuralSearchQueryData } from "../../modules/app/buildStructure/types";
+import {
+  IStructuralSearchQueryData,
+  ParsedQueries
+} from "../../modules/app/buildStructure/types";
 import {
   PrivateStructureMap,
   IPrivateStructureObject,
@@ -56,7 +59,7 @@ interface IProps {
 // the dealy before the dropdownlist updates, for performance upgrades only
 enum Constants {
   numberofResults = 3,
-  matchDelay = 1000
+  matchDelay = 200
 }
 
 const noIndicesError = "Cannot load data, you may be offline";
@@ -360,7 +363,7 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
     const { activeCompany } = await getVariableServerPaths();
     if (!props.reversetagIdToNameMap || !activeCompany) return;
 
-    const parser: { tagids: string[]; type: "c" | "p" }[] = [];
+    const parser: ParsedQueries = [];
     let slice = 0;
     const queryArray: string[][] = [];
     inputParser.forEach((tagName, i) => {
@@ -427,10 +430,10 @@ const SearchBar: React.FC<IProps> = (props: IProps) => {
 
     console.log(parser);
 
-    // props.sendStructuralSearchQuery({
-    //   inputParser: newInputParser,
-    //   activeCompany
-    // });
+    props.sendStructuralSearchQuery({
+      parsedQueries: parser,
+      activeCompany
+    });
   };
 
   //prepare new fuse if fuseindices change in the app state

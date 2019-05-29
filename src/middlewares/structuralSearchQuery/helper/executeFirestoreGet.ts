@@ -5,7 +5,7 @@ import {
 } from "../../../modules/app/buildStructure/actionCreator";
 
 export const executeFirestoreGet = (
-  firestoreQueries: firebase.firestore.Query[]
+  firestoreQueries: (firebase.firestore.CollectionReference)[]
 ) => {
   firestoreQueries.forEach(query => {
     const unsubscribe = query.onSnapshot(snap => {
@@ -16,12 +16,18 @@ export const executeFirestoreGet = (
           store.dispatch(
             receivedFirestoreResponseCreator({
               ...data,
+              id: change.doc.id,
               deletionMode: true
-            })
+            } as any)
           );
         } else {
           // dispatch data
-          store.dispatch(receivedFirestoreResponseCreator(data));
+          store.dispatch(
+            receivedFirestoreResponseCreator({
+              ...data,
+              id: change.doc.id
+            } as any)
+          );
         }
       });
     });

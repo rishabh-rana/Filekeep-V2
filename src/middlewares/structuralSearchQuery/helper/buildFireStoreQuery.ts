@@ -3,8 +3,8 @@ import {
   COMPANIES_COLLECTION,
   MAIN_DATA_SUBCOLLECTION
 } from "../../../config/firestoreConstants";
-import { AugmentedQueryMap } from "../types";
 import store from "../../../store";
+import { ParsedQueries } from "../../../modules/app/buildStructure/types";
 
 const getPrivateStructure = () => {
   return store.getState().app.appCore.private_structure;
@@ -12,9 +12,14 @@ const getPrivateStructure = () => {
 
 //build the query from the sent options and input
 export const buildQueryFromInput = (
-  augmentedQueries: AugmentedQueryMap,
+  parsedQueries: ParsedQueries,
   activeCompany: string
-): firebase.firestore.Query[] => {
+):
+  | false
+  | {
+      firestoreProjects: firebase.firestore.DocumentReference[];
+      firestoreChannels: firebase.firestore.CollectionReference[];
+    } => {
   // WE NEED TO ENSURE THAT WE PUT A WHERE CLAUSE FOR ALL CHANNELS SHARED WITH USER
   // eg. if query was client -> and say client exist on frontend and backend
   // and only frontend is shared with me, then i will treat query as client in frontend
@@ -22,49 +27,29 @@ export const buildQueryFromInput = (
 
   const private_structure = getPrivateStructure();
 
-  if (!private_structure) return [];
+  if (!private_structure) return false;
 
   // base query
   const queryBase = `${COMPANIES_COLLECTION}/${activeCompany}/${MAIN_DATA_SUBCOLLECTION}/`;
 
-  let firestoreQueries: firebase.firestore.Query[] = [];
+  const firestoreChannels: firebase.firestore.CollectionReference[] = [];
+  const firestoreProjects: firebase.firestore.DocumentReference[] = [];
 
-  // loop over queries array
-  augmentedQueries.forEach((augmentedQuery, primeTag) => {
-    // primetag is "Client" in "Client in Frontend"
-
-    augmentedQuery.in.forEach(parentsArray => {
-      let queryPathArray: string[] = [];
-
-      parentsArray.reverse().forEach(parent => {
-        queryPathArray.push("project");
-        queryPathArray.push(parent);
-      });
-
-      const requestedTagDoc = private_structure.get(primeTag);
-      if (!requestedTagDoc) return;
-
-      // const type = requestedTagDoc.type === "proj" ? "project" : "channel";
-
-      // queryPathArray.push(type);
-      // queryPathArray.push(primeTag);
-      // if (type === "channel") queryPathArray.push(MAIN_DATA_SUBCOLLECTION);
-
-      // // slice(1) ensures that we dont take initial "project" entry as its already accounted for in the basestring
-      // const queryPath = queryPathArray.slice(1).join("/");
-
-      // let firestoreQuery: any;
-      // if (type === "channel") {
-      //   firestoreQuery = firestore.collection(queryBase + queryPath);
-      // } else {
-      //   firestoreQuery = firestore.doc(queryBase + queryPath);
-      // }
-      // // here we can ordering by timestamp or filters to the query
-
-      // firestoreQueries.push(firestoreQuery);
+  parsedQueries.forEach(query => {
+    query.tagids.forEach(queryNode => {
+      if (query.type === "c") {
+        firestoreChannels.push(
+          firestore.collection(
+            queryBase + queryNode + "/" + MAIN_DATA_SUBCOLLECTION
+          )
+        );
+      } else {
+        firestoreProjects.push(firestore.doc(queryBase + queryNode));
+      }
     });
   });
+
   // firestore queryArray is ready
-  console.log(firestoreQueries);
-  return firestoreQueries;
+  console.log(firestoreChannels, firestoreProjects);
+  return { firestoreChannels, firestoreProjects };
 };

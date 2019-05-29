@@ -1,11 +1,24 @@
-import { ParsedQueryMap } from "../../../../middlewares/structuralSearchQuery/types";
-import { MainStructureMap } from "../types";
+import { MainStructureMap, ParsedQueries } from "../types";
 
 export const buildMapFromParsedQueries = (
-  parsedQueries: ParsedQueryMap
+  parsedQueries: ParsedQueries
 ): MainStructureMap => {
-  const mainStructure: MainStructureMap = new Map();
-  parsedQueries.forEach(primeTag => {});
+  const mainStructure: MainStructureMap = {};
+  parsedQueries.forEach(query => {
+    query.tagids.forEach(queryNode => {
+      if (query.type === "c") {
+        mainStructure[queryNode] = {
+          header: "Trial Header",
+          nodes: []
+        };
+      } else {
+        mainStructure[queryNode] = {
+          header: "Summary Node",
+          nodes: []
+        };
+      }
+    });
+  });
 
   return mainStructure;
 };

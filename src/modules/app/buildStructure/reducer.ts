@@ -5,13 +5,14 @@ import {
   SYNC_UNSUBSCRIBE_LISTENERS,
   RECIEVED_FIRESTORE_RESPONSE,
   BUILD_MAIN_STRUCTURE_MAP,
-  IBuildMainStructureMapAction
+  IBuildMainStructureMapAction,
+  IFireStoreResponse
 } from "./types";
 import { buildMapFromParsedQueries } from "./reducer/buildMap";
 
 const initialState: ISearchState = {
   unsubscribeListeners: [],
-  mainStructure: new Map(),
+  mainStructure: {},
   mainDataStore: {}
 };
 
@@ -30,10 +31,36 @@ const reducer = (
       };
     case RECIEVED_FIRESTORE_RESPONSE:
       console.log(action.payload);
-      return {
-        ...state,
-        mainDataStore: { ...state.mainDataStore, ...action.payload }
-      };
+      const data = action.payload;
+      const list = state.mainStructure[data.nodeId];
+      let nodes: IFireStoreResponse[] | false = [];
+      if (list) nodes = [...list.nodes];
+      if (nodes && data.deletionMode !== true) {
+        nodes.push(data);
+      } else if (nodes && data.deletionMode === true) {
+        nodes.forEach((node, i) => {
+          if (node.id === data.id) {
+            //@ts-ignore
+            nodes.splice(i, 1);
+            return;
+          }
+        });
+      }
+      if (list) {
+        return {
+          ...state,
+          mainStructure: {
+            ...state.mainStructure,
+            [data.nodeId]: {
+              header: list.header,
+              nodes
+            }
+          }
+        };
+      } else {
+        break;
+      }
+
     case BUILD_MAIN_STRUCTURE_MAP:
       // call a functoin to build map
       return {

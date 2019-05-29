@@ -8,9 +8,9 @@ import {
   ISyncUnsubscribeListenersAction,
   IBuildMainStructureMapAction,
   BUILD_MAIN_STRUCTURE_MAP,
-  IParsedFirestoreResponse
+  ParsedQueries,
+  IFireStoreResponse
 } from "./types";
-import { ParsedQueryMap } from "../../../middlewares/structuralSearchQuery/types";
 
 export const sendStructuralSearchQueryCreator = (
   queryData: IStructuralSearchQueryData
@@ -22,7 +22,7 @@ export const sendStructuralSearchQueryCreator = (
 };
 
 export const receivedFirestoreResponseCreator = (
-  response: IParsedFirestoreResponse
+  response: IFireStoreResponse
 ): IReceivedFirestoreResponseAction => {
   return {
     type: RECIEVED_FIRESTORE_RESPONSE,
@@ -40,7 +40,7 @@ export const syncUnsubscribeListenersCreator = (
 };
 
 export const buildMainStructureMap = (
-  parsedQueries: ParsedQueryMap
+  parsedQueries: ParsedQueries
 ): IBuildMainStructureMapAction => {
   return {
     type: BUILD_MAIN_STRUCTURE_MAP,

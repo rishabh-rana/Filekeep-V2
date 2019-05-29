@@ -6,6 +6,7 @@ import Profile from "./pages/Profile";
 import ErrorPopup from "./components/ErrorHandlers/ErrorPopup";
 import { connect } from "react-redux";
 import { AppState } from "./modules/indexReducer";
+import mainStructure from "./components/MainStructure/mainStructure";
 
 interface IProps {
   shouldSetupCompany: boolean;
@@ -20,6 +21,7 @@ const AppMainRouter: React.FC<IProps> = (props: IProps) => {
       <React.Fragment>
         <Route path="/" component={HeaderBar} />
         <Route path="/" exact component={SearchBar} />
+        <Route path="/" exact component={mainStructure} />
         <Route path="/profile" exact component={Profile} />
         <Route path="/" component={ErrorPopup} />
       </React.Fragment>
