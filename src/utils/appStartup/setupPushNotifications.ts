@@ -1,12 +1,12 @@
-import { messaging, firestore } from "../config/firebase";
+import { messaging, firestore } from "../../config/firebase";
 import {
   USER_COLLECTION,
   INFORMATION_SUBCOLLECTION,
   PRIVATE_INFORMATION
-} from "../config/firestoreConstants";
-import store from "../store";
-import { throwErrorCreator } from "../modules/error/actionCreator";
-import { colors } from "../colors";
+} from "../../config/firestoreConstants";
+import store from "../../store";
+import { throwErrorCreator } from "../../modules/error/actionCreator";
+import { colors } from "../../colors";
 
 const requestPermissionForPush = async (uid: string) => {
   const doc = await firestore

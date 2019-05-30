@@ -18,13 +18,7 @@ import {
   SyncActiveCompanyForSetup
 } from "../modules/appActionCreator";
 import { Redirect } from "react-router";
-import { signoutAndCleanup } from "../utils/signout";
-
-// error is occuring as the firebase listners fire immediately after sending the
-//response to the server (latency compensation) he.ce we must find a way to
-//introduce companyId within setupFilekeep component withpout updating state,
-//as updating state will cause event liteners on that id to become active,
-//t=which cause error
+import { signoutAndCleanup } from "../utils/auth/signout";
 
 const Container = styled.div`
   padding: 0 25px;
@@ -86,7 +80,7 @@ const SetupFilekeep: React.FC<IProps> = (props: IProps) => {
       return;
     }
 
-    //
+    // generate uid
     const uuid = () => {
       return "xxxxxxxxxxxxxxx".replace(/[xy]/g, function(c) {
         var r = (Math.random() * 16) | 0,
@@ -134,12 +128,6 @@ const SetupFilekeep: React.FC<IProps> = (props: IProps) => {
         }
       });
     });
-
-    // const projObjectTag: IParentObject = {};
-    // projectArray.forEach(name => {
-    //   const projname = name.trim();
-    //   projObjectTag[tagidToNameMap[projname]] = true;
-    // });
 
     channelArray.forEach(item => {
       const cha = item.trim();

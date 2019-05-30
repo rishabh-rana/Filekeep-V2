@@ -1,4 +1,4 @@
-import { MainStructureMap, ParsedQueries } from "../types";
+import { MainStructureMap, ParsedQueries } from "../../Board/types";
 
 export const buildMapFromParsedQueries = (
   parsedQueries: ParsedQueries

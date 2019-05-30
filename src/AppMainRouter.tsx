@@ -1,12 +1,12 @@
 import React from "react";
 import { BrowserRouter, Route, Redirect } from "react-router-dom";
 import HeaderBar from "./pages/Header";
-import SearchBar from "./components/SearchBar/search";
+import SearchBar from "./components/StructureSearchBar/search";
 import Profile from "./pages/Profile";
 import ErrorPopup from "./components/ErrorHandlers/ErrorPopup";
 import { connect } from "react-redux";
 import { AppState } from "./modules/indexReducer";
-import mainStructure from "./components/MainStructure/mainStructure";
+import mainStructure from "./components/Board/mainStructure";
 
 interface IProps {
   shouldSetupCompany: boolean;

@@ -1,7 +1,7 @@
-import { auth } from "../config/firebase";
-import store from "../store";
-import { SyncUsers } from "../modules/auth/actionCreator";
-import { SyncActiveCompany } from "../modules/appActionCreator";
+import { auth } from "../../config/firebase";
+import store from "../../store";
+import { SyncUsers } from "../../modules/auth/actionCreator";
+import { SyncActiveCompany } from "../../modules/appActionCreator";
 
 export const signoutAndCleanup = () => {
   auth.signOut();

@@ -1,3 +1,3 @@
-import { executeStructuralQuery } from "./structuralSearchQuery/handleStructuralQuery";
+import { executeStructuralQuery } from "./StructureSearch/handleStructureSearch";
 
 export default [executeStructuralQuery];

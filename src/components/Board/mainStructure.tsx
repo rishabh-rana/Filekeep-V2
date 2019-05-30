@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { connect } from "react-redux";
 import { AppState } from "../../modules/indexReducer";
-import { MainStructureMap } from "../../modules/app/buildStructure/types";
+import { MainStructureMap } from "../../modules/app/Board/types";
 import { firestore } from "../../config/firebase";
 import {
   COMPANIES_COLLECTION,
@@ -125,7 +125,7 @@ const HandleAddition: React.FC<IHandleAdditionProps> = (
 
 const mapstate = (state: AppState) => {
   return {
-    structure: state.app.search.mainStructure,
+    structure: state.app.board.mainStructure,
     activeCompany: state.app.appCore.activeCompany
   };
 };

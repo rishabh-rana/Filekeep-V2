@@ -6,7 +6,7 @@ import { IAuthState } from "../modules/auth/types";
 import { colors } from "../colors";
 
 import { createNewCompany } from "../utils/createNewCompany";
-import { signoutAndCleanup } from "../utils/signout";
+import { signoutAndCleanup } from "../utils/auth/signout";
 
 const Button = styled.button`
   border: none;

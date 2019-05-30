@@ -7,7 +7,7 @@ import Fuse from "fuse.js";
 
 import { connect } from "react-redux";
 import { AppState } from "../../modules/indexReducer";
-import { sendStructuralSearchQueryCreator } from "../../modules/app/buildStructure/actionCreator";
+import { sendStructuralSearchQueryCreator } from "../../modules/app/Board/actionCreator";
 
 import {
   queryFunctionsFuse,
@@ -16,7 +16,7 @@ import {
 import {
   IStructuralSearchQueryData,
   ParsedQueries
-} from "../../modules/app/buildStructure/types";
+} from "../../modules/app/Board/types";
 import {
   PrivateStructureMap,
   IPrivateStructureObject,

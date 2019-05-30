@@ -1,5 +1,5 @@
-import { syncPrivateStructure } from "./syncPrivateStructure";
-import { syncPublicStructure } from "./syncPublicStructure";
+import { syncPrivateStructure } from "./handleCaching/syncPrivateStructure";
+import { syncPublicStructure } from "./handleCaching/syncPublicStructure";
 
 export const handleCachingStructure = async () => {
   const unsubscribePrivate = await syncPrivateStructure();

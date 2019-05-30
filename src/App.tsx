@@ -7,12 +7,12 @@ import { throwErrorCreator } from "./modules/error/actionCreator";
 import ErrorBoundary from "./components/ErrorHandlers/ErrorBoundary";
 
 // import { setupPushNotifications } from "./utils/setupPushNotifications";
-import { verifyLogin, LogoutAfterTimeout } from "./utils/verifyLogin";
+import { verifyLogin, LogoutAfterTimeout } from "./utils/auth/verifyLogin";
 import { BrowserRouter, Route, Switch } from "react-router-dom";
 import { IErrorPopup } from "./modules/error/types";
-import SetupFilekeep from "./pages/SetupFilekeep";
+import SetupFilekeep from "./pages/SetupCompany";
 import AppMainRouter from "./AppMainRouter";
-import { bootAppLoadData } from "./utils/bootAppLoadData";
+import { bootAppLoadData } from "./utils/appStartup/bootAppLoadData";
 import { handleCachingStructure } from "./APIs/caching/databaseStructure/handleCaching";
 import { updateActiveCompany } from "./utils/getVariableServerPaths";
 import { SyncActiveCompany } from "./modules/appActionCreator";

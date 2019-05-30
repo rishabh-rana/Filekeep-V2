@@ -3,7 +3,7 @@ import {
   ITagidToTagnameMap,
   IChangeMap,
   IServerPrivateStructureObject
-} from "../../../modules/appTypes";
+} from "../../../../modules/appTypes";
 
 export const returnDiffs = (
   serverData: IServerPrivateStructureObject,

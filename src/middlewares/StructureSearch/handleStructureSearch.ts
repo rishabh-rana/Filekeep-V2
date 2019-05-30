@@ -3,10 +3,10 @@ import { AppState } from "../../modules/indexReducer";
 import {
   ISendStructuralSearchQueryAction,
   SEND_STRUCTURAL_SEARCH_QUERY
-} from "../../modules/app/buildStructure/types";
-import { buildQueryFromInput } from "./helper/buildFireStoreQuery";
-import { buildMainStructureMap } from "../../modules/app/buildStructure/actionCreator";
-import { executeFirestoreGet } from "./helper/executeFirestoreGet";
+} from "../../modules/app/Board/types";
+import { buildQueryFromInput } from "./handleStructureSearch/buildFirestoreQuery";
+import { buildMainStructureMap } from "../../modules/app/Board/actionCreator";
+import { executeFirestoreGet } from "./handleStructureSearch/executeFirestoreQuery";
 
 export const executeStructuralQuery = (
   api: MiddlewareAPI<Dispatch<AnyAction>, AppState>

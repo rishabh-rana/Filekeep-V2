@@ -1,5 +1,5 @@
-import { firestore, functions } from "../../../config/firebase";
-import { COMPANIES_COLLECTION } from "../../../config/firestoreConstants";
+import { firestore, functions } from "../../../../config/firebase";
+import { COMPANIES_COLLECTION } from "../../../../config/firestoreConstants";
 
 import {
   PUBLIC_STRUCTURE,
@@ -7,17 +7,16 @@ import {
   ITagidToTagnameMap,
   IPrivateStructureIndexedDBObject,
   IServerPrivateStructureObject,
-  ITagNameToTagidObject,
   TAGNAME_TO_TAGID_MAP
-} from "../../../modules/appTypes";
+} from "../../../../modules/appTypes";
 import { returnDiffs } from "./helperFunctions";
-import { getVariableServerPaths } from "../../../utils/getVariableServerPaths";
+import { getVariableServerPaths } from "../../../../utils/getVariableServerPaths";
 import {
   getDatabaseStructure,
   addDatabaseStructureData
-} from "../../indexedDb/databaseHeirarchyStructure";
-import store from "../../../store";
-import { SyncNameMap } from "../../../modules/appActionCreator";
+} from "../../../indexedDb/databaseHeirarchyStructure";
+import store from "../../../../store";
+import { SyncNameMap } from "../../../../modules/appActionCreator";
 
 // sync public asets from server to the private structure on the server, state, IDB of current user
 

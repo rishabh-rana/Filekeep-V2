@@ -11,10 +11,7 @@ import mixpanel from "../../config/mixpanel";
 import { TRACK_SIGNIN } from "../../config/mixpanelConstants";
 import { throwErrorCreator } from "../../modules/error/actionCreator";
 import { createNewCompany } from "../../utils/createNewCompany";
-import {
-  SyncActiveCompany,
-  SyncSetupCompany
-} from "../../modules/appActionCreator";
+import { SyncActiveCompany } from "../../modules/appActionCreator";
 
 export const signInWithGoogle = async (dispatch: Dispatch) => {
   await auth.setPersistence(per);

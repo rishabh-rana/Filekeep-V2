@@ -2,7 +2,7 @@ import store from "../../../store";
 import {
   receivedFirestoreResponseCreator,
   syncUnsubscribeListenersCreator
-} from "../../../modules/app/buildStructure/actionCreator";
+} from "../../../modules/app/Board/actionCreator";
 
 export const executeFirestoreGet = (
   firestoreQueries: (firebase.firestore.CollectionReference)[]

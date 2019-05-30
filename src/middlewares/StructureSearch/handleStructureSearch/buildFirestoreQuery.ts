@@ -4,7 +4,7 @@ import {
   MAIN_DATA_SUBCOLLECTION
 } from "../../../config/firestoreConstants";
 import store from "../../../store";
-import { ParsedQueries } from "../../../modules/app/buildStructure/types";
+import { ParsedQueries } from "../../../modules/app/Board/types";
 
 const getPrivateStructure = () => {
   return store.getState().app.appCore.private_structure;
@@ -20,11 +20,6 @@ export const buildQueryFromInput = (
       firestoreProjects: firebase.firestore.DocumentReference[];
       firestoreChannels: firebase.firestore.CollectionReference[];
     } => {
-  // WE NEED TO ENSURE THAT WE PUT A WHERE CLAUSE FOR ALL CHANNELS SHARED WITH USER
-  // eg. if query was client -> and say client exist on frontend and backend
-  // and only frontend is shared with me, then i will treat query as client in frontend
-  // otherwise we will get permission denied from backend, prepare for this case as well
-
   const private_structure = getPrivateStructure();
 
   if (!private_structure) return false;

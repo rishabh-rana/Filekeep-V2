@@ -1,23 +1,23 @@
-import { firestore, functions } from "../../../config/firebase";
+import { firestore } from "../../../../config/firebase";
 import {
   COMPANIES_COLLECTION,
   USERS_SUBCOLLECTION
-} from "../../../config/firestoreConstants";
-import { getVariableServerPaths } from "../../../utils/getVariableServerPaths";
+} from "../../../../config/firestoreConstants";
+import { getVariableServerPaths } from "../../../../utils/getVariableServerPaths";
 import {
   getDatabaseStructure,
   addDatabaseStructureData
-} from "../../indexedDb/databaseHeirarchyStructure";
+} from "../../../indexedDb/databaseHeirarchyStructure";
 import {
   PRIVATE_STRUCTURE,
   IPrivateStructureIndexedDBObject,
   ITagidToTagnameMap,
   IServerPrivateStructureObject,
   TAGID_TO_TAGNAME_MAP
-} from "../../../modules/appTypes";
+} from "../../../../modules/appTypes";
 import { returnDiffs } from "./helperFunctions";
-import store from "../../../store";
-import { SyncPrivateStructureMap } from "../../../modules/appActionCreator";
+import store from "../../../../store";
+import { SyncPrivateStructureMap } from "../../../../modules/appActionCreator";
 
 // this method syncs in realtime, the private assets on this company container shared with current user
 

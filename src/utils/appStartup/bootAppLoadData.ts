@@ -1,4 +1,4 @@
-import { getDatabaseStructure } from "../APIs/indexedDb/databaseHeirarchyStructure";
+import { getDatabaseStructure } from "../../APIs/indexedDb/databaseHeirarchyStructure";
 import {
   PRIVATE_STRUCTURE,
   IPrivateStructureIndexedDBObject,
@@ -6,12 +6,12 @@ import {
   ITagNameToTagidMapIndexedDbObject,
   ITagidToTagnameMapIndexedDBObject,
   TAGNAME_TO_TAGID_MAP
-} from "../modules/appTypes";
-import store from "../store";
+} from "../../modules/appTypes";
+import store from "../../store";
 import {
   SyncPrivateStructureMap,
   SyncNameMap
-} from "../modules/appActionCreator";
+} from "../../modules/appActionCreator";
 
 export const bootAppLoadData = async (): Promise<boolean> => {
   const promise: Promise<boolean> = new Promise(async (resolve, reject) => {

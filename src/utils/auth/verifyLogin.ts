@@ -1,8 +1,8 @@
 import firebase from "firebase/app";
-import { SyncUsers } from "../modules/auth/actionCreator";
-import store from "../store";
-import mixpanel from "../config/mixpanel";
-import { FOUND_MESSING_WITH_CODE } from "../config/mixpanelConstants";
+import { SyncUsers } from "../../modules/auth/actionCreator";
+import store from "../../store";
+import mixpanel from "../../config/mixpanel";
+import { FOUND_MESSING_WITH_CODE } from "../../config/mixpanelConstants";
 import { signoutAndCleanup } from "./signout";
 
 const getUidInState = (): string | null => {
